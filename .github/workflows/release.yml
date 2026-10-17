@@ -97,32 +97,15 @@ jobs:
           files: out/*.apk
           draft: false
           prerelease: false
-          body: |
-            ## Persephone TV ${{ github.ref_name }}
+          # 说明文字交给下一步用 gh 写入。
+          # action-gh-release 在 release 已存在时不一定更新 body，实测不生效。
+          body: ""
 
-            Android TV 直播 / 影视播放器。Jetpack Compose 手写电视端焦点管理，遥控器操作，无触摸依赖。
-
-            ### 下载
-
-            | 文件 | 说明 |
-            | --- | --- |
-            | `PersephoneTV-${{ github.ref_name }}-release.apk` | 推荐，直接安装 |
-            | `PersephoneTV-${{ github.ref_name }}-debug.apk` | 带调试信息，排查问题用 |
-
-            ### 安装
-
-            ```bash
-            adb connect 192.168.x.x:5555     # 电视/盒子需先打开「网络调试」
-            adb install -r PersephoneTV-${{ github.ref_name }}-release.apk
-            ```
-
-            也可以用 U 盘拷到电视上，用文件管理器点开安装（需允许「未知来源」）。
-
-            ### 说明
-
-            - 支持 Android 5.0 (API 21) 及以上，横屏，适配遥控器
-            - 不内置任何内容源，首次使用请到「设置」填自己的 M3U / JSON 地址，或到「找源」检索公开索引
-            - release 包暂用 debug 签名，可直接安装
-
-            **完整变更**：https://github.com/wknet1988/PersephoneTV/commits/${{ github.ref_name }}
-            **使用文档**：https://github.com/wknet1988/PersephoneTV#readme
+      - name: Write release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sed "s|__TAG__|$GITHUB_REF_NAME|g" .github/release-notes.md > /tmp/notes.md
+          gh release edit "$GITHUB_REF_NAME" --notes-file /tmp/notes.md
+          gh release view "$GITHUB_REF_NAME" --json name,assets \
+            --template '{{.name}} -> {{range .assets}}{{.name}} {{end}}{{"\n"}}'
