@@ -135,13 +135,13 @@ class M3uParserTest {
     }
 
     @Test
-    fun `真实内置源解密后能跑完整条解析`() {
-        // 加密 / 解密本身在 EncodedSourceTest 里测，这里只看解析器面对真实数据的行为
+    fun `随包附带的频道清单解密后能跑完整条解析`() {
+        // 混淆 / 解混淆本身在 EncodedSourceTest 里测，这里只看解析器面对真实数据的行为
         val plain = EncodedSource.decrypt(
             java.io.File("src/main/assets/builtin_cn.m3u.enc").readText()
         )
         val list = M3uParser.parse(plain)
-        assertTrue("内置列表解析出 ${list.size} 条", list.size == 90)
+        assertTrue("频道清单解析出 ${list.size} 条", list.size == 90)
         assertTrue("不该有未分组", list.none { it.group == "未分组" })
         assertTrue("不该有未命名频道", list.none { it.name == "未命名频道" })
         assertTrue("地址必须唯一", list.map { it.url }.toSet().size == list.size)

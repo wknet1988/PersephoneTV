@@ -94,7 +94,7 @@ fun LiveScreen(
             is LoadState.Loading, is LoadState.Idle -> LoadingPane("正在加载直播源…")
             is LoadState.Error -> MessagePane(
                 title = "直播源加载失败",
-                detail = s.message + "\n可在「设置」里更换 M3U 地址，或清空地址使用内置演示源。",
+                detail = s.message + "\n可在「设置」里更换 M3U 地址，或清空则回到随包附带的演示列表。",
                 actionLabel = "重试",
                 onAction = { retry++ }
             )

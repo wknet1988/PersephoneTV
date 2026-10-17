@@ -130,7 +130,7 @@ fun FindSourceScreen(
     }
 
     val selectedEntry = entries.firstOrNull { it.id == selectedId }
-    // 内置源不用联网，耗时文案换成「离线可用」
+    // 包内清单不用联网拉，耗时文案换成「播放仍需联网」
     val selectedIsBuiltin = selectedEntry?.isAsset == true
     val selectedState = selectedEntry?.let { states[it.id] }
     val allChannels = (selectedState as? SourceState.Ready)?.channels.orEmpty()
@@ -144,7 +144,7 @@ fun FindSourceScreen(
                     Text("找源", style = TvType.Display, color = TextPrimary)
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "${entries.size} 个源 · 内置 + 联网检索",
+                        "${entries.size} 个源 · 包内清单 + 联网检索",
                         color = TextTertiary,
                         fontSize = 12.sp
                     )
@@ -210,7 +210,7 @@ fun FindSourceScreen(
                     Text(
                         text = when (val s = selectedState) {
                             is SourceState.Ready -> if (selectedIsBuiltin) {
-                                "${s.channels.size} 个频道 · APK 内置，离线可用"
+                                "${s.channels.size} 个频道 · 清单随包附带，播放需联网"
                             } else {
                                 "${s.channels.size} 个频道 · 拉取耗时 ${s.latencyMs} ms"
                             }

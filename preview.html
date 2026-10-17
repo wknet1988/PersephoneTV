@@ -267,7 +267,7 @@
           <div class="f-head">
             <div style="flex:1;min-width:0">
               <h1 style="font-size:40px;font-weight:700">找源</h1>
-              <div style="color:var(--t3);font-size:12px;margin-top:4px" id="src-count">7 个源 · 内置 + 联网检索</div>
+              <div style="color:var(--t3);font-size:12px;margin-top:4px" id="src-count">7 个源 · 包内清单 + 联网检索</div>
             </div>
             <div class="btn f" id="btn-search" style="margin-top:0;padding:11px 20px;font-size:14px">重新检索</div>
           </div>
@@ -319,11 +319,11 @@
       <div class="settings">
         <div class="col-l">
           <h1>设置</h1>
-          <div class="sub">配置自己的片源。默认用 APK 内置的精选频道，改完记得保存。</div>
+          <div class="sub">配置自己的片源。默认用随包附带的频道清单，改完记得保存。</div>
 
           <div class="field-lab"><span class="bar"></span>直播源（M3U / M3U8）</div>
           <div class="field f">asset:builtin_cn.m3u</div>
-          <div class="hint">支持 http(s) 链接、file://、绝对路径，以及 asset: 内置资源；支持 #EXTINF 的 group-title / tvg-logo 和 #EXTVLCOPT 的 Referer / User-Agent。</div>
+          <div class="hint">支持 http(s) 链接、file://、绝对路径，以及 asset: 包内资源；支持 #EXTINF 的 group-title / tvg-logo 和 #EXTVLCOPT 的 Referer / User-Agent。</div>
 
           <div class="field-lab"><span class="bar"></span>影视目录（JSON）</div>
           <div class="field f ph">https://example.com/catalog.json</div>
@@ -331,7 +331,7 @@
 
           <div class="field-lab"><span class="bar"></span>自定义源池（找源页用）</div>
           <div class="field f ph" style="height:84px;align-items:flex-start;padding-top:14px;line-height:22px">每行一个：名称|地址</div>
-          <div class="hint">这些地址会出现在「找源」页，和内置公开源一起参与一键检索。</div>
+          <div class="hint">这些地址会出现在「找源」页，和其他候选源一起参与一键检索。</div>
 
           <div class="actions" style="margin-top:24px">
             <div class="btn f" id="s-save">保存并刷新</div>
@@ -708,7 +708,7 @@ function play(title, sub, isLive){
 
 /* ---------- 找源 ---------- */
 const sources = [
-  {id:'builtin-cn', n:'内置精选 · 中国频道', note:'随 APK 内置，离线可用，无需联网', count:90, ms:0, builtin:true},
+  {id:'bundled-cn', n:'附带频道清单 · 中国频道', note:'90 条第三方频道地址，清单随 APK 附带；播放仍需联网', count:90, ms:0, bundled:true},
   {id:'cn', n:'中文频道 · 公开列表', note:'iptv-org 收录的公开华语频道，体积小、起播快', count:186, ms:820},
   {id:'news', n:'新闻频道 · 公开列表', note:'全球公开新闻频道', count:142, ms:960},
   {id:'sports', n:'体育频道 · 公开列表', note:'全球公开体育频道', count:98, ms:1120},
@@ -717,7 +717,7 @@ const sources = [
   {id:'index', n:'全量索引 · 公开列表', note:'上万个频道，拉取较慢，建议配合关键词过滤', count:0, ms:0, fail:'连接超时'}
 ];
 const seeds = {
-  'builtin-cn': channels.map(c => ({zh:c.n, en:c.en, g:c.g})),
+  'bundled-cn': channels.map(c => ({zh:c.n, en:c.en, g:c.g})),
   cn:[
     {zh:'CCTV-1 综合', en:'CCTV-1', g:'央视'},
     {zh:'CCTV-5 体育', en:'CCTV-5', g:'央视'},
@@ -826,8 +826,8 @@ function selectSource(id){
   const st = fState[id] || { status:'idle' };
   document.getElementById('f-title').textContent = s.n;
   document.getElementById('f-sub').textContent =
-    st.status === 'ok'   ? (s.builtin
-        ? `${st.count} 个频道 · APK 内置，离线可用`
+    st.status === 'ok'   ? (s.bundled
+        ? `${st.count} 个频道 · 清单随包附带，播放需联网`
         : `${st.count} 个频道 · 拉取耗时 ${st.ms} ms`) :
     st.status === 'run'  ? '正在联网检索…' :
     st.status === 'err'  ? st.err : s.note;

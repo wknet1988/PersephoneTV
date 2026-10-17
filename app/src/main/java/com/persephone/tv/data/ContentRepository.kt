@@ -11,9 +11,9 @@ import java.util.concurrent.TimeUnit
 
 /**
  * 内容加载入口。
- * 地址为空 → 读 assets 内置演示数据；
- * `encasset:` → 读 assets 里加密存放的内置列表（先解混淆）；
- * `asset:` → 读 assets 里指定的内置列表；
+ * 地址为空 → 读 assets 里附带的演示数据；
+ * `encasset:` → 读 assets 里加密存放的频道清单（先解混淆）；
+ * `asset:` → 读 assets 里指定的包内资源；
  * http(s):// → 网络拉取；file:// 或绝对路径 → 读本地文件。
  */
 object ContentRepository {

@@ -26,7 +26,7 @@ data class ProbeResult(
  *
  * 只做「拉取公开 M3U 索引 → 解析 → 去重 → 测速」，
  * 不抓取任何需要授权或来路不明的站点。
- * `asset:` 开头的内置源直接从 APK 里读，不走网络。
+ * `asset:` / `encasset:` 开头的包内清单直接从 APK 里读，不需要联网拉播放列表；
  */
 object SourceFinder {
 
@@ -137,7 +137,7 @@ object SourceFinder {
     private fun friendlyError(e: Throwable): String = when (e) {
         is UnknownHostException -> "域名解析失败，可能网络不通"
         is SocketTimeoutException -> "连接超时"
-        is java.io.FileNotFoundException -> "内置资源缺失，请重装应用"
+        is java.io.FileNotFoundException -> "包内资源缺失，请重装应用"
         else -> e.message ?: e.javaClass.simpleName
     }
 }

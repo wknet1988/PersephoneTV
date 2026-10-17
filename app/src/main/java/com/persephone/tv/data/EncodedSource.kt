@@ -3,7 +3,7 @@ package com.persephone.tv.data
 import java.io.IOException
 
 /**
- * 内置播放列表的解混淆。
+ * 随包附带的频道清单的解混淆。
  *
  * 仓库里不放明文 M3U，只放 `assets/builtin_cn.m3u.enc`：原文按字节做凯撒位移，再 base64。
  * **这是混淆，不是加密** —— 目的是让爬代码仓库的脚本不能直接 grep 出一堆播放地址；
@@ -22,7 +22,7 @@ object EncodedSource {
         ALPHABET.forEachIndexed { i, c -> table[c.code] = i }
     }
 
-    /** 读一份内置资源；`encoded=true` 时先解混淆再返回 */
+    /** 读一份包内资源；`encoded=true` 时先解混淆再返回 */
     fun readAsset(context: android.content.Context, name: String, encoded: Boolean): String {
         val raw = context.assets.open(name).bufferedReader().use { it.readText() }
         if (!encoded) return raw
@@ -36,7 +36,7 @@ object EncodedSource {
     fun decrypt(cipher: String): String {
         // 没有格式头就当格式不对，宁可直接报错也别把一堆乱码喂给解析器
         if (!cipher.trimStart().startsWith(MAGIC)) {
-            throw IOException("内置源格式不对，缺少「$MAGIC」头")
+            throw IOException("包内清单格式不对，缺少「$MAGIC」头")
         }
         val sb = StringBuilder(cipher.length)
         for (line in cipher.lineSequence()) {

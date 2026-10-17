@@ -64,7 +64,7 @@ fun VodScreen(
             is LoadState.Loading, is LoadState.Idle -> LoadingPane("正在加载影视目录…")
             is LoadState.Error -> MessagePane(
                 title = "影视目录加载失败",
-                detail = s.message + "\n可在「设置」里更换 JSON 地址，或清空地址使用内置演示片库。",
+                detail = s.message + "\n可在「设置」里更换 JSON 地址，或清空则回到随包附带的演示片库。",
                 actionLabel = "重试",
                 onAction = { retry++ }
             )

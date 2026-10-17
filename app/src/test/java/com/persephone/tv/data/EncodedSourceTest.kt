@@ -8,12 +8,12 @@ import org.junit.Test
 import java.io.File
 
 /**
- * 内置源的加密存放 + 解密链路。
+ * 随包附带的频道清单的加密存放 + 解密链路。
  *
  * 三件事要钉死：
  * 1. base64 解码是自己写的（不依赖 `android.util.Base64`，那个在 JVM 单测里是桩会直接抛异常），
  *    所以拿 **JDK 自带的 base64 编码器**当参照做往返验证，不能「看起来能跑」就信。
- * 2. 仓库里必须只有 `.enc`、密文里不能出现明文地址，否则加密这件事就白做。
+ * 2. 仓库里必须只有 `.enc`、密文里不能出现明文地址，否则混淆这件事就白做。
  * 3. 解密出来的东西要能原样走完解析 → 分组 → 认中文名整条链路。
  */
 class EncodedSourceTest {
@@ -60,15 +60,15 @@ class EncodedSourceTest {
         assertTrue("报错信息应该说清楚原因", ex.message?.contains("PERS-ENC1") == true)
     }
 
-    // ---------- 加密内置源本身 ----------
+    // ---------- 加密存放的频道清单本身 ----------
 
     @Test
-    fun `仓库里只有加密版内置源`() {
+    fun `仓库里只有加密版频道清单`() {
         assertFalse(
-            "assets 里不该有明文 builtin_cn.m3u，否则加密白做",
+            "assets 里不该有明文 builtin_cn.m3u，否则混淆白做",
             File("$ASSETS/builtin_cn.m3u").exists()
         )
-        assertTrue("缺少加密内置源", File("$ASSETS/builtin_cn.m3u.enc").exists())
+        assertTrue("缺少加密版频道清单", File("$ASSETS/builtin_cn.m3u.enc").exists())
     }
 
     @Test
@@ -81,7 +81,7 @@ class EncodedSourceTest {
     }
 
     @Test
-    fun `解密后是完整的 M3U`() {
+    fun `解密后是完整可播的 M3U`() {
         val plain = EncodedSource.decrypt(File("$ASSETS/builtin_cn.m3u.enc").readText())
         assertTrue("应以 #EXTM3U 开头", plain.startsWith("#EXTM3U"))
         assertEquals(

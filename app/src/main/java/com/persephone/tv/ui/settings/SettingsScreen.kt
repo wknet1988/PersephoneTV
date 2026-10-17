@@ -68,7 +68,7 @@ fun SettingsScreen(
             Text("设置", style = TvType.Display, color = TextPrimary)
             Spacer(Modifier.height(6.dp))
             Text(
-                "配置自己的片源。默认用 APK 内置的精选频道，改完记得保存。",
+                "配置自己的片源。默认用随包附带的频道清单，改完记得保存。",
                 color = TextTertiary,
                 fontSize = 12.sp
             )
@@ -90,7 +90,7 @@ fun SettingsScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "支持 http(s) 链接、file://、绝对路径，以及 asset: 内置资源；" +
+                "支持 http(s) 链接、file://、绝对路径，以及 asset: 包内资源；" +
                     "支持 #EXTINF 的 group-title / tvg-logo 和 #EXTVLCOPT 的 Referer / User-Agent。",
                 color = TextTertiary,
                 fontSize = 11.sp
@@ -133,7 +133,7 @@ fun SettingsScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "这些地址会出现在「找源」页，和内置公开源一起参与一键检索。只写地址也可以，名称会自动编号。",
+                "这些地址会出现在「找源」页，和其他候选源一起参与一键检索。只写地址也可以，名称会自动编号。",
                 color = TextTertiary,
                 fontSize = 11.sp
             )

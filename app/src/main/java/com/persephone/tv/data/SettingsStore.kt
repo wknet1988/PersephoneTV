@@ -18,7 +18,7 @@ class SettingsStore(private val context: Context) {
         val CUSTOM = stringPreferencesKey("custom_source_list")
     }
 
-    /** 没设置过时用 APK 内置的精选频道，开箱即用 */
+    /** 没设置过时用随包附带的频道清单 */
     val liveUrl: Flow<String> = context.settingsDataStore.data
         .map { it[Keys.LIVE] ?: DEFAULT_LIVE }
     val catalogUrl: Flow<String> = context.settingsDataStore.data.map { it[Keys.CATALOG].orEmpty() }
@@ -44,7 +44,7 @@ class SettingsStore(private val context: Context) {
     }
 
     companion object {
-        /** 首次启动 / 恢复默认时的直播源：内置精选频道（加密存放），离线可用 */
+        /** 首次启动 / 恢复默认时的直播源：随包附带的频道清单（加密存放），播放仍需联网 */
         const val DEFAULT_LIVE = "encasset:builtin_cn.m3u.enc"
     }
 }

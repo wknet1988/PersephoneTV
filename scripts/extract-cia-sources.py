@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-从 3DS CIA 自定义软件里提取内置直播源，生成 Persephone TV 可直接使用的 M3U。
+从 3DS CIA 自定义软件里提取内置频道目录，生成 Persephone TV 可使用的 M3U。
+
+注意：产物是「第三方频道地址清单」，不是内容本身，也不代表本项目提供这些频道。
 
 用法:
     python scripts/extract-cia-sources.py 魔方电视-v1.2.9.cia
@@ -189,7 +191,8 @@ def to_m3u(records, title):
     out = [
         "#EXTM3U",
         f"# {title}",
-        "# 由 scripts/extract-cia-sources.py 从 3DS CIA 内置目录提取",
+        "# 频道地址清单，提取自 3DS 自制软件「魔方电视」v1.2.9 的内置目录",
+        "# 本项目不提供、不运营这些频道；播放需要联网",
         "# 字段: 频道名称|播放地址|分类与画质|国家/地区|Referrer|User-Agent",
         "",
     ]
@@ -210,7 +213,7 @@ def to_m3u(records, title):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="从 CIA 提取内置直播源")
+    ap = argparse.ArgumentParser(description="从 CIA 提取其内置频道目录")
     ap.add_argument("cia", help="CIA 文件路径")
     ap.add_argument("-o", "--out", help="输出路径，写 .m3u 出明文、写 .enc 出混淆后内容")
     ap.add_argument("--json", help="额外导出 JSON 路径（明文，只用于本地核对，别提交）")
@@ -249,7 +252,10 @@ def main():
 
     if args.out:
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-        title = "Persephone TV · 内置精选频道" if not args.all else "Persephone TV · 全量频道"
+        title = (
+            "Persephone TV · 频道地址清单（提取自 3DS 魔方电视，播放需联网）"
+            if not args.all else "Persephone TV · 频道地址清单（全量）"
+        )
         text = to_m3u(records, title)
         # .enc 结尾 → 走 base64 + 凯撒混淆后入库，仓库里不放明文
         payload = encrypt(text) if args.out.lower().endswith(".enc") else text
