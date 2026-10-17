@@ -1,5 +1,8 @@
 # Persephone TV — Android TV 播放器（Kotlin + Compose + Media3）
 
+[![Release](https://github.com/wknet1988/PersephoneTV/actions/workflows/release.yml/badge.svg)](https://github.com/wknet1988/PersephoneTV/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 一个从零搭建的电视端应用：左侧导航栏 + 直播频道列表 + **自动联网找源** + 影视海报墙 + 详情页 + 全屏播放器 + 片源设置。
 所有交互围绕**遥控器焦点**设计（放大 + 描边 + 自动滚动），没有触摸依赖。
 
@@ -200,6 +203,18 @@ gradle testDebugUnitTest        # 18 passed
 | `PersephoneTV-1.0.1-release.apk` | 9.4 MB | 未配正式签名，暂用 debug 签名，可直接安装 |
 
 APK 清单已校验：`leanback-launchable-activity` 存在、`banner` 存在、`android.hardware.touchscreen` 标记为不需要、声明横屏。即插到电视桌面能被识别成 TV 应用。
+
+### 发版（自动）
+
+打 tag 就会触发 GitHub Actions，自动跑测试 → 构建 debug/release APK → 创建 Release 并把 APK 挂上去：
+
+```bash
+git tag v1.0.2
+git push origin v1.0.2
+```
+
+workflow 在 `.github/workflows/release.yml`，用的是仓库自带的 `GITHUB_TOKEN`，不需要配任何 secret。
+也可以去 [Releases](https://github.com/wknet1988/PersephoneTV/releases) 页面直接下载现成的 APK，不用自己编译。
 
 ### 方式三：已有完整环境
 
