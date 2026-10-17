@@ -391,6 +391,7 @@ private fun Channel.toPlayTarget(): PlayTarget {
         title = title,
         subtitle = sub.ifBlank { null },
         url = url,
-        isLive = true
+        isLive = true,
+        headers = headers
     )
 }

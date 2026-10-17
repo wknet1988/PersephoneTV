@@ -191,7 +191,36 @@ object ChannelNames {
         // —— 新闻 / 都市 ——
         Entry("上海新闻综合", "Shanghai News and General", emptyList()),
         Entry("看看新闻", "Kankan News", emptyList()),
-        Entry("深圳都市", "Shenzhen Metro", emptyList())
+        Entry("深圳都市", "Shenzhen Metro", emptyList()),
+
+        // —— 地方台：公开索引里只写英文名的（含拼写变体，比如 Chanel）——
+        Entry("白城电视台", "Baicheng TV", emptyList()),
+        Entry(
+            "赤峰新闻综合", "Chifeng Comprehensive News Channel",
+            listOf("Chifeng Comprehensive News", "Chifeng Comprehensive News Chanel")
+        ),
+        Entry(
+            "哈尔滨新闻综合", "Harbin Comprehensive News Channel",
+            listOf("Harbin Comprehensive News")
+        ),
+        Entry("哈尔滨影视", "Harbin Movie Channel", emptyList()),
+        Entry(
+            "兰州新闻综合", "Lanzhou Comprehensive News Channel",
+            listOf("Lanzhou Comprehensive News")
+        ),
+        Entry("四平电视台", "Siping TV", emptyList()),
+        Entry("新疆电视台二套", "Xinjiang TV 2", emptyList()),
+        Entry("浙江国际", "Zhejiang International Channel", emptyList()),
+        Entry("东方卫视国际", "Dragon TV International", emptyList()),
+        Entry("江苏公共新闻", "Jiangsu Public & News Channel", emptyList()),
+
+        // 青岛台：源里只有 QTV-n 代号，补上城市名，用户才知道是哪儿
+        Entry("青岛 QTV-1", "QTV-1", emptyList()),
+        Entry("青岛 QTV-2", "QTV-2", emptyList()),
+        Entry("青岛 QTV-3", "QTV-3", emptyList()),
+        Entry("青岛 QTV-4", "QTV-4", emptyList()),
+        Entry("青岛 QTV-5", "QTV-5", emptyList()),
+        Entry("青岛 QTV-6", "QTV-6", emptyList())
     )
 
     // ==================== 索引 ====================

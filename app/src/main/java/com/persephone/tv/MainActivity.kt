@@ -219,7 +219,7 @@ private fun SideRail(
         }
 
         Spacer(Modifier.weight(1f))
-        Text("v1.0.1", color = TextTertiary, fontSize = 10.sp)
+        Text("v1.0.2", color = TextTertiary, fontSize = 10.sp)
     }
 }
 

@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -79,6 +80,7 @@ fun FindSourceScreen(
     modifier: Modifier = Modifier
 ) {
     val entries = remember(customSources) { SourceCatalog.withCustom(customSources) }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     var states by remember(entries) {
@@ -104,7 +106,7 @@ fun FindSourceScreen(
         searching = true
         states = entries.associate { it.id to (SourceState.Probing as SourceState) }
         scope.launch {
-            SourceFinder.probeAll(entries) { result ->
+            SourceFinder.probeAll(context, entries) { result ->
                 SourceFinder.remember(result)
                 states = states + (
                     result.entry.id to if (result.ok) {
@@ -128,6 +130,8 @@ fun FindSourceScreen(
     }
 
     val selectedEntry = entries.firstOrNull { it.id == selectedId }
+    // 内置源不用联网，耗时文案换成「离线可用」
+    val selectedIsBuiltin = selectedEntry?.isAsset == true
     val selectedState = selectedEntry?.let { states[it.id] }
     val allChannels = (selectedState as? SourceState.Ready)?.channels.orEmpty()
     val shownChannels = remember(allChannels, keyword) { SourceFinder.search(allChannels, keyword) }
@@ -140,7 +144,7 @@ fun FindSourceScreen(
                     Text("找源", style = TvType.Display, color = TextPrimary)
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "${entries.size} 个公开源 · 自动联网检索",
+                        "${entries.size} 个源 · 内置 + 联网检索",
                         color = TextTertiary,
                         fontSize = 12.sp
                     )
@@ -169,7 +173,7 @@ fun FindSourceScreen(
                                     selectedId = entry.id
                                     scope.launch {
                                         states = states + (entry.id to (SourceState.Probing as SourceState))
-                                        val r = SourceFinder.probe(entry)
+                                        val r = SourceFinder.probe(context, entry)
                                         SourceFinder.remember(r)
                                         states = states + (
                                             entry.id to if (r.ok) {
@@ -205,7 +209,11 @@ fun FindSourceScreen(
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = when (val s = selectedState) {
-                            is SourceState.Ready -> "${s.channels.size} 个频道 · 拉取耗时 ${s.latencyMs} ms"
+                            is SourceState.Ready -> if (selectedIsBuiltin) {
+                                "${s.channels.size} 个频道 · APK 内置，离线可用"
+                            } else {
+                                "${s.channels.size} 个频道 · 拉取耗时 ${s.latencyMs} ms"
+                            }
                             is SourceState.Probing -> "正在联网检索…"
                             is SourceState.Failed -> s.message
                             else -> selectedEntry?.note ?: "按 OK 开始检索"
@@ -266,7 +274,8 @@ fun FindSourceScreen(
                                                 title = ch.title,
                                                 subtitle = sub.ifBlank { null },
                                                 url = ch.url,
-                                                isLive = true
+                                                isLive = true,
+                                                headers = ch.headers
                                             )
                                         )
                                     }

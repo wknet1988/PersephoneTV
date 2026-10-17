@@ -21,3 +21,9 @@ sdk/
 
 # 构建产物里的 APK 走 GitHub Releases，不进仓库
 dist/
+
+# 用于提取直播源的 3DS CIA 原始包，体积大且不宜再分发
+*.cia
+
+# 内置源的明文中间产物，提交的只有加密后的 .enc
+app/src/main/assets/builtin_cn.m3u

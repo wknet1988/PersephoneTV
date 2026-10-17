@@ -75,3 +75,36 @@ object NameSort : Comparator<String> {
         collator.compare(x, y)
     }
 }
+
+/**
+ * 分组排序：常见分组按「看电视的直觉」排，其余按音序。
+ *
+ * 纯音序排会把「央视与 CGTN」排到「地方台 · 安徽」后面（yang > di），
+ * 打开电视第一眼看到的是县级台，很别扭。所以给这几类分组钉死顺序，
+ * 同一优先级内部仍按 [NameSort] 的音序排。
+ */
+object GroupOrder : Comparator<String> {
+
+    /** 央视 → 卫视 → 地方台 → 港澳台 → 广播 → 其余 → 其他 / 未分组 */
+    private const val OTHER_RANK = 90
+    private const val UNGROUPED_RANK = 91
+    private const val DEFAULT_RANK = 50
+
+    override fun compare(a: String, b: String): Int {
+        val ra = rank(a)
+        val rb = rank(b)
+        if (ra != rb) return ra - rb
+        return NameSort.compare(a, b)
+    }
+
+    private fun rank(group: String): Int = when {
+        group.startsWith("央视") -> 0
+        group.startsWith("卫视") -> 1
+        group.startsWith("地方台") -> 2
+        group.startsWith("港澳台") -> 3
+        group.startsWith("广播") -> 4
+        group == "其他" -> OTHER_RANK
+        group == "未分组" -> UNGROUPED_RANK
+        else -> DEFAULT_RANK
+    }
+}

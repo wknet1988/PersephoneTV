@@ -1,5 +1,6 @@
 package com.persephone.tv.data
 
+import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -25,6 +26,7 @@ data class ProbeResult(
  *
  * 只做「拉取公开 M3U 索引 → 解析 → 去重 → 测速」，
  * 不抓取任何需要授权或来路不明的站点。
+ * `asset:` 开头的内置源直接从 APK 里读，不走网络。
  */
 object SourceFinder {
 
@@ -52,10 +54,10 @@ object SourceFinder {
     }
 
     /** 检索一个源：下载 + 解析 + 记录耗时 */
-    suspend fun probe(entry: SourceEntry): ProbeResult = withContext(Dispatchers.IO) {
+    suspend fun probe(context: Context, entry: SourceEntry): ProbeResult = withContext(Dispatchers.IO) {
         val start = System.currentTimeMillis()
         runCatching {
-            val text = fetch(entry.url)
+            val text = fetch(context, entry)
             val channels = M3uParser.parse(text)
             val cost = System.currentTimeMillis() - start
             if (channels.isEmpty()) {
@@ -76,11 +78,12 @@ object SourceFinder {
 
     /** 并发检索全部源，每完成一个就回调一次，UI 可以逐个刷新 */
     suspend fun probeAll(
+        context: Context,
         entries: List<SourceEntry>,
         onResult: suspend (ProbeResult) -> Unit
     ) = coroutineScope {
         entries.forEach { entry ->
-            launch { onResult(probe(entry)) }
+            launch { onResult(probe(context, entry)) }
         }
     }
 
@@ -116,9 +119,12 @@ object SourceFinder {
     private fun normalize(url: String): String =
         url.trim().lowercase().substringBefore('#')
 
-    private fun fetch(url: String): String {
+    private fun fetch(context: Context, entry: SourceEntry): String {
+        if (entry.isAsset) {
+            return EncodedSource.readAsset(context, entry.assetName, entry.encoded)
+        }
         val request = Request.Builder()
-            .url(url)
+            .url(entry.url)
             .header("User-Agent", UA)
             .header("Accept", "*/*")
             .build()
@@ -131,6 +137,7 @@ object SourceFinder {
     private fun friendlyError(e: Throwable): String = when (e) {
         is UnknownHostException -> "域名解析失败，可能网络不通"
         is SocketTimeoutException -> "连接超时"
+        is java.io.FileNotFoundException -> "内置资源缺失，请重装应用"
         else -> e.message ?: e.javaClass.simpleName
     }
 }

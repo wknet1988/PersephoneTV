@@ -10,7 +10,11 @@ data class Channel(
     /** 中文名，由 ChannelNames 解析得到，可能为空 */
     val nameZh: String? = null,
     /** 英文名，同上 */
-    val nameEn: String? = null
+    val nameEn: String? = null,
+    /** 播放时必须带的 Referer，部分源做了防盗链，为空表示不需要 */
+    val referrer: String? = null,
+    /** 播放时必须带的 User-Agent，同上 */
+    val userAgent: String? = null
 ) {
     /** 主标题：有中文名就用中文，否则用原文 */
     val title: String
@@ -28,6 +32,17 @@ data class Channel(
     /** 排序用的名字 */
     val sortKey: String
         get() = title
+
+    /** 交给播放器的请求头，空表示用播放器默认值 */
+    val headers: Map<String, String>
+        get() = buildMap {
+            referrer?.takeIf { it.isNotBlank() }?.let { put("Referer", it) }
+            userAgent?.takeIf { it.isNotBlank() }?.let { put("User-Agent", it) }
+        }
+
+    /** 有没有防盗链要求，列表里可以给个角标 */
+    val needsHeaders: Boolean
+        get() = !referrer.isNullOrBlank() || !userAgent.isNullOrBlank()
 }
 
 /** 剧集 / 分集 */
@@ -60,7 +75,9 @@ data class PlayTarget(
     val title: String,
     val subtitle: String? = null,
     val url: String,
-    val isLive: Boolean = false
+    val isLive: Boolean = false,
+    /** 需要额外附带的请求头（Referer / User-Agent），空表示用默认 */
+    val headers: Map<String, String> = emptyMap()
 )
 
 /** 统一的加载状态 */

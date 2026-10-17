@@ -35,18 +35,20 @@
 | --- | --- |
 | ![播放器](docs/preview-player.png) | ![设置](docs/preview-settings.png) |
 
-> 截图来自 `preview.html` 的 HTML 复刻版，不是真机运行截图（本机无 Android 编译环境）。
+> 截图来自 `preview.html` 的 HTML 复刻版（无头浏览器渲染），不是真机运行截图；数据取自真实的 `builtin_cn.m3u`。
 
 ## 功能
 
 - **直播**：解析 M3U / M3U8 播放列表，按 `group-title` 分组，焦点移动即切换右侧预览，OK 键直接起播
 - **中英双语台名**：自动把 `CCTV 1` / `Hunan Satellite TV` 这类英文名认成「CCTV-1 综合 / 湖南卫视」，列表里中文一行、英文一行并列
-- **音序排序**：分组与组内频道都按音序排——英文按字母、中文按拼音、数字按数值（CCTV-2 在 CCTV-10 前面）
+- **音序排序**：组内频道按音序排——英文按字母、中文按拼音、数字按数值（CCTV-2 在 CCTV-10 前面）；分组按「央视 → 卫视 → 地方台 → 港澳台 → 广播」的看电视直觉排
+- **内置 90 个中国频道**：随 APK 打包，装上就能看，不联网也能列出频道表（详见[下一节](#内置频道从-3ds-cia-里挖出来的)）
+- **防盗链支持**：解析 `#EXTVLCOPT` 的 `http-referrer` / `http-user-agent`，播放时注入到 ExoPlayer 的 HTTP 数据源，需要带 Referer / UA 才给流的源也能播
 - **影视**：解析 JSON 目录，分类横向海报墙（Coil 加载海报，失败自动降级为渐变占位），详情页含简介、评分、选集
-- **播放器**：Media3 ExoPlayer，支持 HLS / MP4，硬解、进度条、缓冲指示、暂停遮罩、错误重试
+- **播放器**：Media3 ExoPlayer，支持 HLS / MP4，硬解、进度条、缓冲指示、暂停遮罩、错误重试，放开 http→https 跨协议重定向
 - **找源**：一键联网检索多个公开频道源，并发拉取 → 解析去重 → 按耗时排序，支持关键词过滤、单频道试播、一键设为直播源
-- **设置**：片源地址可改（http(s) / `file://` / 绝对路径），维护自定义源池；DataStore 持久化
-- **开箱即用**：内置 6 个公开测试流 + 9 部公开示例片，装上就能点开看
+- **设置**：片源地址可改（http(s) / `file://` / 绝对路径 / `asset:` 内置资源），维护自定义源池；DataStore 持久化
+- **开箱即用**：内置 90 个精选频道 + 9 部公开示例片，装上就能点开看
 
 ## 频道名与排序
 
@@ -75,6 +77,68 @@ CCTV-13 新闻
 
 英文名已被中文名包含时（如 `CCTV-1 综合` 里的 `CCTV-1`）不再重复显示第二行。
 
+分组顺序（`GroupOrder`）不完全按音序——纯音序会把「央视与 CGTN」排到「地方台 · 安徽」后面（yang > di），打开电视第一眼看到的是县级台。所以这几类分组钉死了顺序，同一优先级内部仍按音序：
+
+```
+央视与 CGTN → 卫视 → 地方台 · <省> → 港澳台 → 广播电台 → 其余（音序）→ 其他 / 未分组
+```
+
+## 内置频道：从 3DS CIA 里挖出来的
+
+仓库根目录曾放进两个 3DS 自制软件包（`魔方电视-v1.2.9.cia` / `魔方收音机-v1.3.8.cia`）。把里面的内置频道目录提出来，清洗后作为 APK 的内置源：
+
+```bash
+python scripts/extract-cia-sources.py 魔方电视-v1.2.9.cia \
+    -o app/src/main/assets/builtin_cn.m3u.enc
+```
+
+**CIA 结构**（未加密时可以直接读 content）：`header(0x20) | cert | ticket | tmd | meta | content…`，header 里几个长度字段都是小端，content 起点 = `header_size + cert + ticket + tmd + meta`（这个包里是 `0x7364`）。
+
+**目录格式**：频道目录以纯文本塞在 RomFS 里，一行一条，管道分隔
+
+```
+频道名称|播放地址|分类与画质|国家/地区|Referrer|User-Agent
+CCTV-1|https://…/xxx.m3u8|中央广播电视总台 720p|中国||
+```
+
+**提取结果**：
+
+| 项 | 数量 |
+| --- | --- |
+| 电视包内的频道记录 | 3398 条（URL 全唯一，名称去重后 2754） |
+| 其中中国相关 | 97 条（中国 92 / 中国台湾 4 / 中国澳门 1） |
+| 同名镜像去重后 | **90 条** |
+| 需要 Referer / UA 的 | 全量里 54 / 130 条，中国区 1 条 |
+
+**清洗规则**（都在脚本里，可复现）：
+
+1. 按国家/地区筛出中国相关条目
+2. 归类：`央视与 CGTN` / `卫视` / `地方台 · <省>` / `港澳台` / `广播电台` / `其他`；源里只写英文名的城市台（`Baicheng TV`、`QTV-1`…）按名称前缀补省份
+3. 蜻蜓FM、央广等音频站（`ls.qingting.fm`、`satellitepull.cnr.cn`）单独归到「广播电台」，别和电视台混在一起
+4. 同分组同名只留一条，https 优先、地址短的优先
+
+### 内置源在仓库里是加密存放的
+
+`assets/builtin_cn.m3u.enc` **不是明文 M3U**：原文按字节做凯撒位移（+13）再 base64，前面加一行 `# PERS-ENC1` 格式头。App 侧在 `EncodedSource.decrypt()` 里还原，明文只存在于运行时内存里。
+
+```bash
+# 想自己核对？解密只要三行
+python -c "import base64,io,sys; t=open('app/src/main/assets/builtin_cn.m3u.enc',encoding='utf-8').read(); b=''.join(l for l in t.splitlines() if not l.startswith('#')); sys.stdout.write(bytes((x-13)%256 for x in base64.b64decode(b)).decode('utf-8'))"
+```
+
+**这是混淆，不是加密。** 目的是让爬公开仓库的脚本不能直接 `grep '\.m3u8'` 把地址全捞走，不是防人——凯撒位移加 base64 三行代码就还原了。所以：
+
+- 没往里放任何敏感数据（它本来也只是公开可见的播放地址）
+- `scripts/extract-cia-sources.py` 只在命令行加 `-x`/写 `.enc` 结尾时输出密文；本地要核对就先出一份明文
+- 单测 `EncodedSourceTest` 拿 **JDK 自带的 base64 编码器**当参照做往返验证，并断言仓库里不存在明文、密文里 grep 不到 `.m3u8` / `https:` / `CCTV`
+- `.gitignore` 里把明文的 `builtin_cn.m3u` 挡掉了，防止手滑提交
+
+`preview.html` 里的同一份数据也是同样处理（`ENC_DATA` 常量 + `dech()` 运行期解码），解密后与原数据逐字节一致。
+
+**魔方收音机**：content 熵 7.29、未加密，但全文只有 1 处 `://`、0 处 `.m3u8`，`http` 字面量只有 3 处且全是 `http:C` 这类系统服务名和 ffmpeg/openssl 的库字符串。**电台列表不在包里，是运行时从服务器拉的**，所以没有可提取的内容。
+
+> 这些源来自第三方应用的内置目录，可用性未经逐个验证，也随时可能失效。播放器会把错误码和地址打出来，换个源即可。用途与合规见[免责声明](#免责声明)。
+
 ## 目录结构
 
 ```
@@ -84,17 +148,20 @@ PersephoneTV/
 ├── app/src/main/
 │   ├── AndroidManifest.xml          # LEANBACK_LAUNCHER + 横屏 + banner
 │   ├── assets/
-│   │   ├── demo_live.m3u            # 内置直播源
+│   │   ├── builtin_cn.m3u.enc       # 内置精选频道（90 条，base64+凯撒混淆存放）
+│   │   ├── demo_live.m3u            # 兜底演示流
 │   │   └── demo_catalog.json        # 内置影视目录
 │   ├── res/drawable-xhdpi/tv_banner.png # 电视桌面横幅（320x180dp）
 │   └── java/com/persephone/tv/
 │       ├── MainActivity.kt          # 侧边栏 + 页面状态机 + 返回键处理
 │       ├── data/
 │       │   ├── Models.kt            # Channel / VodItem / PlayTarget / LoadState
-│       │   ├── M3uParser.kt         # M3U 解析 + 分组
+│       │   ├── M3uParser.kt         # M3U 解析（含 #EXTVLCOPT 请求头）+ 分组
+│       │   ├── ChannelNames.kt      # 中英名互译（规则 + 别名表 + 去噪）
+│       │   ├── NameSort.kt          # 音序排序 + 分组优先级
 │       │   ├── CatalogParser.kt     # JSON 目录解析
 │       │   ├── ContentRepository.kt # asset / 网络 / 本地文件统一加载
-│       │   ├── SourceCatalog.kt     # 内置公开源 + 自定义源池解析
+│       │   ├── SourceCatalog.kt     # 内置源 + 自定义源池解析
 │       │   ├── SourceFinder.kt      # 并发检索 / 测速 / 去重 / 关键词搜索
 │       │   └── SettingsStore.kt     # DataStore 配置
 │       └── ui/
@@ -106,8 +173,10 @@ PersephoneTV/
 │           ├── detail/DetailScreen.kt
 │           ├── player/PlayerScreen.kt
 │           └── settings/SettingsScreen.kt
+├── app/src/test/java/…/data/        # 单元测试（频道名 / M3U 解析 / 排序）
 ├── scripts/build-apk.ps1            # 一键构建（自动找 JDK / SDK / Gradle，缺了才下载）
 ├── scripts/build-apk.bat            # 双击运行入口
+├── scripts/extract-cia-sources.py   # 从 3DS CIA 提取内置直播源，生成 M3U
 └── gradle/wrapper/gradle-wrapper.properties
 ```
 
@@ -262,13 +331,16 @@ adb install -r dist/PersephoneTV-1.0.1-release.apk
 
 内置候选源：
 
-| 源 | 地址 |
-| --- | --- |
-| 中文频道 | `https://iptv-org.github.io/iptv/countries/cn.m3u` |
-| 新闻 / 体育 / 纪录片 / 音乐 | `https://iptv-org.github.io/iptv/categories/*.m3u` |
-| 全量索引 | `https://iptv-org.github.io/iptv/index.m3u` |
+| 源 | 地址 | 说明 |
+| --- | --- | --- |
+| 内置精选 · 中国频道 | `encasset:builtin_cn.m3u.enc` | 90 条，随 APK 打包，离线可列、无需联网 |
+| 中文频道 | `https://iptv-org.github.io/iptv/countries/cn.m3u` | 联网 |
+| 新闻 / 体育 / 纪录片 / 音乐 | `https://iptv-org.github.io/iptv/categories/*.m3u` | 联网 |
+| 全量索引 | `https://iptv-org.github.io/iptv/index.m3u` | 联网，上万个频道 |
 
-**边界**：这里只聚合**公开可访问的频道索引**（iptv-org 这类开源公开列表），不内置、不抓取任何盗版或付费频道聚合站。检索结果的可播放性取决于源站状态与你的网络，请自行确认所在地区的相关规定与内容授权。
+`asset:` 是自定义协议，指向 APK 的 `assets/` 目录，`SourceFinder` 遇到它直接从包里读，不走网络、不测速。
+
+**边界**：联网部分只聚合**公开可访问的频道索引**（iptv-org 这类开源公开列表），不抓取任何付费或需要授权的内容。检索结果的可播放性取决于源站状态与你的网络，请自行确认所在地区的相关规定与内容授权。
 
 想加自己的源：设置页「自定义源池」每行写一个 `名称|地址`（只写地址也可以），保存后会一起参与一键检索。
 
@@ -281,6 +353,17 @@ adb install -r dist/PersephoneTV-1.0.1-release.apk
 #EXTINF:-1 tvg-logo="https://.../logo.png" group-title="央视",CCTV-1
 http://example.com/live/cctv1.m3u8
 ```
+
+需要防盗链的源，把请求头写在 `#EXTINF` 和地址之间，只对**紧跟着的下一个频道**生效：
+
+```m3u
+#EXTINF:-1 group-title="港澳台",Lotus TV
+#EXTVLCOPT:http-referrer=https://www.example.com/
+#EXTVLCOPT:http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+https://example.com/lotus/index.m3u8
+```
+
+也认 Kodi 的 `#KODIPROP:` 写法和 `http-referer`（少一个 r）的拼法，以及老式的 `#EXTGRP:分组`。
 
 ### 影视（JSON）
 
@@ -311,9 +394,10 @@ http://example.com/live/cctv1.m3u8
 ## 已知限制
 
 - 源码已通过真实编译（Gradle 8.7 + JDK 17 + AGP 8.5.2，`assembleDebug` / `assembleRelease` 均 BUILD SUCCESSFUL，零警告），并已在真机验证直播、影视、播放、找源、设置五个界面功能正常。
-- 中英对照覆盖 **CCTV 全系列 + 全国省级卫视 + 港澳台主流频道 + 常见卡通/体育/影视/教育频道**。冷门地方台、付费频道如果源里只给英文名，会保持英文——不是漏做，是认不出来时不硬猜。要扩表改 `ChannelNames.kt` 里的 `ENTRIES` 即可。
-- 只做客户端展示与播放，不内置任何内容源；默认片源是公开测试流（Blender 开源影片 / Apple / Mux 示例流），仅用于验证播放链路。
-- 「找源」只保证把公开索引拉下来并解析，**不保证每个频道都能播**——源站下线、地区限制、防盗链都会导致失败，播放器会给出错误码与地址，可换源重试。
+- 单元测试 36 个用例覆盖频道名解析、M3U 解析（含 `#EXTVLCOPT` 请求头只对下一条生效）、分组与音序排序、内置源的加密/解密往返，`./gradlew :app:testDebugUnitTest` 全绿。
+- 中英对照覆盖 **CCTV 全系列 + 全国省级卫视 + 港澳台主流频道 + 常见卡通/体育/影视/教育频道 + 源里只写英文名的城市台**。冷门地方台、付费频道如果源里只给英文名，会保持英文——不是漏做，是认不出来时不硬猜。要扩表改 `ChannelNames.kt` 里的 `ENTRIES` 即可。
+- 内置的 90 个频道来自第三方 3DS 应用的内置目录，**可用性未逐个验证**，源站下线、地区限制、防盗链都会导致播放失败。播放器会给出错误码与地址，可换源重试。
+- 只做客户端展示与播放，不托管任何音视频内容。
 - 未做 DRM、字幕、弹幕、投屏、断点续播、收藏历史等进阶功能。
 
 ## 后续可以接着做
@@ -326,9 +410,13 @@ http://example.com/live/cctv1.m3u8
 
 ## 免责声明
 
-本项目只做**播放器客户端**，不提供、不托管、不分发任何音视频内容。内置的演示片源均为公开测试流，仅用于验证播放链路。「找源」功能只聚合 iptv-org 这类**公开开源索引**，不内置任何盗版或付费聚合站点。
+本项目只做**播放器客户端**，不提供、不托管、不分发任何音视频内容。
 
-使用第三方源时的内容合法性由使用者自行判断，请遵守所在地区法律法规。
+- 内置的 `assets/builtin_cn.m3u.enc`（已做混淆） 是从第三方 3DS 自制软件（魔方电视 v1.2.9）的内置目录中**提取的播放地址列表**，不是本项目采集或运营的内容。提取脚本与清洗规则见 `scripts/extract-cia-sources.py`，任何人都可以对任意 CIA 重跑。
+- 联网「找源」只聚合 iptv-org 这类**公开开源索引**。
+- 示例片源为公开测试流（Blender 开源影片 / Apple / Mux 示例流），仅用于验证播放链路。
+
+使用第三方源时的内容合法性由使用者自行判断，请遵守所在地区法律法规。若相关权利人认为某项内容不应被索引，请提 Issue，会从内置列表中移除。
 
 ## License
 

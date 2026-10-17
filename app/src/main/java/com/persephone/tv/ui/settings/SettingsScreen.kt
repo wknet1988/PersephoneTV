@@ -68,7 +68,7 @@ fun SettingsScreen(
             Text("设置", style = TvType.Display, color = TextPrimary)
             Spacer(Modifier.height(6.dp))
             Text(
-                "配置自己的片源。留空则使用内置演示数据，改完记得保存。",
+                "配置自己的片源。默认用 APK 内置的精选频道，改完记得保存。",
                 color = TextTertiary,
                 fontSize = 12.sp
             )
@@ -90,7 +90,8 @@ fun SettingsScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "支持 http(s) 链接、file:// 或绝对路径；支持 #EXTINF 的 group-title / tvg-logo。",
+                "支持 http(s) 链接、file://、绝对路径，以及 asset: 内置资源；" +
+                    "支持 #EXTINF 的 group-title / tvg-logo 和 #EXTVLCOPT 的 Referer / User-Agent。",
                 color = TextTertiary,
                 fontSize = 11.sp
             )
@@ -148,7 +149,7 @@ fun SettingsScreen(
                 )
                 Spacer(Modifier.width(14.dp))
                 TvButton(
-                    text = "恢复内置演示",
+                    text = "恢复默认源",
                     primary = false,
                     onClick = {
                         live = ""

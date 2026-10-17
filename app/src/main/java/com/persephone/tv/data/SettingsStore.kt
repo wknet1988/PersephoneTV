@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.map
 
 private val Context.settingsDataStore by preferencesDataStore(name = "persephone_settings")
 
-/** 用户配置：直播源 / 影视目录 / 自定义源池（留空 = 使用内置演示数据） */
+/** 用户配置：直播源 / 影视目录 / 自定义源池 */
 class SettingsStore(private val context: Context) {
 
     private object Keys {
@@ -18,7 +18,9 @@ class SettingsStore(private val context: Context) {
         val CUSTOM = stringPreferencesKey("custom_source_list")
     }
 
-    val liveUrl: Flow<String> = context.settingsDataStore.data.map { it[Keys.LIVE].orEmpty() }
+    /** 没设置过时用 APK 内置的精选频道，开箱即用 */
+    val liveUrl: Flow<String> = context.settingsDataStore.data
+        .map { it[Keys.LIVE] ?: DEFAULT_LIVE }
     val catalogUrl: Flow<String> = context.settingsDataStore.data.map { it[Keys.CATALOG].orEmpty() }
 
     /** 每行一个自定义源，格式 `名称|地址` 或只写地址 */
@@ -39,5 +41,10 @@ class SettingsStore(private val context: Context) {
 
     suspend fun reset() {
         context.settingsDataStore.edit { it.clear() }
+    }
+
+    companion object {
+        /** 首次启动 / 恢复默认时的直播源：内置精选频道（加密存放），离线可用 */
+        const val DEFAULT_LIVE = "encasset:builtin_cn.m3u.enc"
     }
 }

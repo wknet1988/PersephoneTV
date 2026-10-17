@@ -51,7 +51,9 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import com.persephone.tv.data.PlayTarget
 import com.persephone.tv.ui.components.TvButton
@@ -61,6 +63,9 @@ import com.persephone.tv.ui.theme.TextPrimary
 import com.persephone.tv.ui.theme.TextSecondary
 import com.persephone.tv.ui.theme.TextTertiary
 import kotlinx.coroutines.delay
+
+/** 源没指定 UA 时用的默认值，和拉列表时保持一致 */
+private const val DEFAULT_UA = "PersephoneTV/1.0 (Android TV)"
 
 /**
  * 全屏播放器。
@@ -88,8 +93,20 @@ fun PlayerScreen(
     var positionMs by remember { mutableStateOf(0L) }
     var durationMs by remember { mutableStateOf(0L) }
 
-    val exoPlayer = remember(target.url) {
+    val exoPlayer = remember(target.url, target.headers) {
+        // 部分源做了防盗链：必须带对 Referer / User-Agent 才给流，
+        // 还有不少源是 http 起播后跳到 https，所以放开跨协议重定向。
+        val headers = target.headers
+        val httpFactory = DefaultHttpDataSource.Factory()
+            .setUserAgent(headers["User-Agent"] ?: DEFAULT_UA)
+            .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(15_000)
+            .setReadTimeoutMs(25_000)
+        val extra = headers.filterKeys { !it.equals("User-Agent", ignoreCase = true) }
+        if (extra.isNotEmpty()) httpFactory.setDefaultRequestProperties(extra)
+
         ExoPlayer.Builder(context)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(httpFactory))
             .setSeekBackIncrementMs(10_000)
             .setSeekForwardIncrementMs(10_000)
             .build()

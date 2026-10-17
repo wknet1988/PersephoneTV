@@ -223,7 +223,7 @@
     <div class="rail-item f" data-tab="vod"><span class="bar"></span>影视</div>
     <div class="rail-item f" data-tab="finder"><span class="bar"></span>找源</div>
     <div class="rail-item f" data-tab="settings"><span class="bar"></span>设置</div>
-    <div class="rail-ver">v1.0.1</div>
+    <div class="rail-ver">v1.0.2</div>
   </aside>
 
   <main id="stage">
@@ -233,7 +233,7 @@
         <div class="ch-list">
           <div class="ch-head">
             <h1>直播频道</h1>
-            <p>6 个频道 · 2 个分组</p>
+            <p id="live-count">— 个频道</p>
           </div>
           <div class="ch-scroll" id="chscroll"></div>
         </div>
@@ -267,7 +267,7 @@
           <div class="f-head">
             <div style="flex:1;min-width:0">
               <h1 style="font-size:40px;font-weight:700">找源</h1>
-              <div style="color:var(--t3);font-size:12px;margin-top:4px" id="src-count">6 个公开源 · 自动联网检索</div>
+              <div style="color:var(--t3);font-size:12px;margin-top:4px" id="src-count">7 个源 · 内置 + 联网检索</div>
             </div>
             <div class="btn f" id="btn-search" style="margin-top:0;padding:11px 20px;font-size:14px">重新检索</div>
           </div>
@@ -319,11 +319,11 @@
       <div class="settings">
         <div class="col-l">
           <h1>设置</h1>
-          <div class="sub">配置自己的片源。留空则使用内置演示数据，改完记得保存。</div>
+          <div class="sub">配置自己的片源。默认用 APK 内置的精选频道，改完记得保存。</div>
 
           <div class="field-lab"><span class="bar"></span>直播源（M3U / M3U8）</div>
-          <div class="field f ph">https://example.com/live.m3u</div>
-          <div class="hint">支持 http(s) 链接、file:// 或绝对路径；支持 #EXTINF 的 group-title / tvg-logo。</div>
+          <div class="field f">asset:builtin_cn.m3u</div>
+          <div class="hint">支持 http(s) 链接、file://、绝对路径，以及 asset: 内置资源；支持 #EXTINF 的 group-title / tvg-logo 和 #EXTVLCOPT 的 Referer / User-Agent。</div>
 
           <div class="field-lab"><span class="bar"></span>影视目录（JSON）</div>
           <div class="field f ph">https://example.com/catalog.json</div>
@@ -335,7 +335,7 @@
 
           <div class="actions" style="margin-top:24px">
             <div class="btn f" id="s-save">保存并刷新</div>
-            <div class="btn ghost f">恢复内置演示</div>
+            <div class="btn ghost f">恢复默认源</div>
           </div>
         </div>
 
@@ -372,14 +372,175 @@
 <div class="tip"><b>Persephone TV</b> · 用 <b>方向键</b> 移动焦点，<b>回车</b> 确认，<b>Esc</b> 返回 —— 和电视遥控器一致</div>
 
 <script>
-const channels = [
-  {g:'演示频道', n:'Mux 多码率测试台', en:'Mux Multi-Bitrate Test', u:'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'},
-  {g:'演示频道', n:'苹果 BipBop 示例流', en:'Apple BipBop', u:'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8'},
-  {g:'演示频道', n:'辛特尔 预告片', en:'Sintel Trailer', u:'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8'},
-  {g:'演示频道', n:'钢之泪 预告', en:'Tears of Steel', u:'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8'},
-  {g:'本地/局域网', n:'本机示例（HLS）', en:'Local HLS Sample', u:'https://test-streams.mux.dev/pts_shift/master.m3u8'},
-  {g:'本地/局域网', n:'局域网示例占位', en:'LAN Placeholder', u:'http://192.168.1.10:8080/live/stream.m3u8'}
-];
+const ENC_DATA = [
+  "aIgvdC9HL/Kxu/W0k/HFmy1QVGFbLzkvey9HL1BQYWM4LT4vOS9yey9HLy85L4IvRy91gYF9gEc8PHBxOnl2g3I6gIF/cm56",
+  "O3tyhIA7cHCBg315goA7cHx6PHl2g3I8gHp2eUdQVU5bW1JZPjuAenZ5PH15boZ5doCBO3pAgkUvijmIL3QvRy/ysbv1tJPx",
+  "xZstUFRhWy85L3svRy9QUGFjOC0/LzkvcnsvRy8vOS+CL0cvdYGBfYBHPDxwcTp5doNyOoCBf3Juejt7coSAO3BwgYN9eYKA",
+  "O3B8ejx5doNyPIB6dnlHUFVOW1tSWT87gHp2eTx9eW6GeXaAgTt6QIJFL4o5iC90L0cv8rG79bST8cWbLVBUYVsvOS97L0cv",
+  "UFBhYzo+LfTIyfKdlS85L3J7L0cvUFBhYzo+Lzkvgi9HL3WBgX2ARzw8eXaDcn15boY6gH+AO4N8cDtwfHo7cHs8dXmAPIGD",
+  "PD5AQWw+RT1ucXM7ekCCRS+KOYgvdC9HL/Kxu/W0k/HFmy1QVGFbLzkvey9HL1BQYWM6QS3xxbrzo5TyqMr2ppIvOS9yey9H",
+  "L1BQYWM6QS85L4IvRy91gYF9gEc8PHFugHU/O257gXZ4O4B4PHl2g3I8gXKAgWxwcIGDbIF2h3J7PH15boZ5doCBO3pAgkUv",
+  "ijmIL3QvRy/ysbv1tJPxxZstUFRhWy85L3svRy9QUGFjOkYt9Me38sqiLzkvcnsvRy9QUGFjOkYvOS+CL0cvdYGBfYBHPDyD",
+  "QTpyQ28+cEJvbnNBcj9BPXNyQ0BucW9zQ0VxcW4/QEFAQjt5doNydYRwQTtwfHo8fXluhjt4bnt4bnt5doNyO3B8ejx5doNy",
+  "PD5DRkVBP0BARkRARj1GPz07ekCCRUyAgm9sekCCRUqBf4JyM3JxdHJsgHl2cHJKgX+CcjOCgHJ/bIBygIB2fHtsdnFKRXJF",
+  "Q3FvQkE+bkNAcEVDb29DP29Ac0NAP0ZFREFFc0AvijmIL3QvRy/ysbv1tJPxxZstUFRhWy85L3svRy9QVGFbLzkvcnsvRy8v",
+  "OS+CL0cvdYGBfYBHPDxxboB1QTtue4F2eDuAeDx5doNyPIFygIFscHSBezx9eW6GeXaAgTt6QIJFL4o5iC90L0cv8rG79bST",
+  "8cWbLVBUYVsvOS97L0cvUFRhWy1Of25vdnAvOS9yey9HLy85L4IvRy91gYF9gEc8PHtyhIA7cHSBeztwfHo8f3KAfIJ/cHI8",
+  "eXaDcjxuf25vdnA8cHSBezpuO3pAgkUvijmIL3QvRy/ysbv1tJPxxZstUFRhWy85L3svRy9QVGFbLVF8cIJ6cnuBbn+GLzkv",
+  "cnsvRy8vOS+CL0cvdYGBfYBHPDxxboB1QDtue4F2eDuAeDx5doNyPIFygIFscHSBe2xxfHA8fXluhnl2gIE7ekCCRS+KOYgv",
+  "dC9HL/Kxu/W0k/HFmy1QVGFbLzkvey9HL1BUYVstU39ye3B1LzkvcnsvRy8vOS+CL0cvdYGBfYBHPDx7coSAO3B0gXs7cHx6",
+  "PH9ygHyCf3ByPHl2g3I8c39ye3B1PHB0gXs6czt6QIJFL4o5iC90L0cv8rG79bST8cWbLVBUYVsvOS97L0cvUFRhWy1fgoCA",
+  "dm57LzkvcnsvRy8vOS+CL0cvdYGBfYBHPDx7coSAO3B0gXs7cHx6PH9ygHyCf3ByPHl2g3I8f4KAgHZuezxwdIF7On87ekCC",
+  "RS+KOYgvdC9HL/Kxu/W0k/HFmy1QVGFbLzkvey9HL1BUYVstYH1ue3aAdS85L3J7L0cvLzkvgi9HL3WBgX2ARzw8e3KEgDtw",
+  "dIF7O3B8ejx/coB8gn9wcjx5doNyPHKAfW57fHk8cHSBezpyO3pAgkUvijmIL3QvRy/ysbv1tJPxxZstUFRhWy85L3svRy9Q",
+  "VGFb9Me38sqiLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDw9QUQ/O3x/dDx1eYA8cHSBe3E7ekCCRS+KOYgvdC9HL/Kxu/W0k/HF",
+  "my1QVGFbLzkvey9HL1BUYVv1mL71vLovOS9yey9HLy85L4IvRy91gYF9gEc8PD1BRD87fH90PHV5gDxwdIF7O3pAgkUvijmI",
+  "L3QvRy/ymrj1tJMvOS97L0cv88Km876s8pq49bSTLzkvcnsvRy9ndXJ3dm57dC1gboFyeXl2gXItYWMvOS+CL0cvdYGBfYBH",
+  "PDxueXY6ejp5O3CHgYM7cHx6PHB1bnt7cnmAPHlue4F2bns8cHVue3tyeT09Pjw+PUU9fTt6QIJFL4o5iC90L0cv88W888vA",
+  "8py9Lzkvey9HL09yboKBdnOCeS1ZdnNyLWFjLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDxCcXFwckA9cm9Bb0JCO4CBf3Juenl8",
+  "cHg7e3KBPG95gYN1cTxveYGDPjx9eW6GeXaAgTt6QIJFL4o5iC90L0cv88W888vA8py9Lzkvey9HL1FueXYtYWMvOS9yey9H",
+  "Ly85L4IvRy91gYF9Rzw8hISEO3FueXaBgztwfHo7gYRHQUJDRTx5doNyPHFueXY8dntxcoU7ekCCRS+KOYgvdC9HL/PFvPPL",
+  "wPKcvS85L3svRy9ZfIGCgC1hYy85L3J7L0cvLzkvgi9HL3WBgX2ARzw8cHF7QTuAeIZ0fDt6ezx5doNyPHF2gHg+PFl8gYKA",
+  "PFVZYINAOlNhTjxZfIGCgDt6QIJFL4o5iC90L0cv88W888vA8py9Lzkvey9HL2FudoRuey1We3F2dHJ7fIKALWFjLzkvcnsv",
+  "Ry8vOS+CL0cvdYGBfYBHPDyAgX9ybnp2fXBzbn19O254bnpudodycTt7coE8eXaDcjxscXJzdnuAgWw8eXaDcmxEPz08eHKG",
+  "bG8+Qj09O3pAgkUvijmIL3QvRy/zxbzzy8DynL0vOS97L0cvZGVhYy85L3J7L0cvLzkvgi9HL3WBgX2ARzw8enxvdnlyO3Bw",
+  "cXuBcnB1O3B8ejyBf257gHB8cXJ/PGxxcnN2e4CBbDyDfHE+Q0FsWXaDcjx5doNyPHB1gnt4eXaAgWyEPj5ERD1BREJAPjt6",
+  "QIJFL4o5iC90L0cv8qm986PG8py9Lc/ELfKdlvOrpC85L3svRy/0psryrJv0ocL1tJPynL0vOS9yey9HL09udnB1cnt0LWFj",
+  "Lzkvgi9HL3WBgX2ARzw8gIF/cm56Pzt3eXuBgztwezxvbnZwdXJ7dD48gHE8eXaDcjt6QIJFL4o5iC90L0cv8qm986PG8py9",
+  "Lc/ELfKTkvWfpvKcsS85L3svRy/1wrHywL3zo732pMj0yMnynZUvOS9yey9HL1B1dnNye3QtUHx6fX9ydXJ7gHaDci1bcoSA",
+  "LVB1bnt7cnkvOS+CL0cvdYGBfUc8PH15boY+On54O3t6gYM7cHs8eXaDcjw+REBCQkFDQ0ZEQEE+PUBAO3pAgkUvijmIL3Qv",
+  "Ry/yqb3zo8bynL0tz8Qt8cWX88LELzkvey9HL/HFqfOjxvKauPW0k/Koyvamki85L3J7L0cvUX9udHx7LWFjLVZ7gXJ/e26B",
+  "dnx7bnkvOS+CL0cvdYGBfYBHPDx/coCBf3Juejt9cYGDdXE7cHx6PHpyenOAPD1vPm9GQnBGOkBCQUA6QW5zRjpGc3FvOnBz",
+  "QUJzPkM9P3M+RDt6QIJFL4o5iC90L0cv8qm986PG8py9Lc/ELfbInvbLpvO+rC85L3svRy/yoJXyvaHzyLXzo732pMj0yMny",
+  "nZUvOS9yey9HL1Vuf292ey1QfHp9f3J1cnuAdoNyLVtyhIAtUHVue3tyeS85L4IvRy91gYF9gEc8PICBf3Juejt1f2+Bgzt7",
+  "coE8hYSHdTx9eW6GeXaAgTt6QIJFTGyCfYFKcnNBPnFxQkA+REJCRj5AQkZBL4o5iC90L0cv8qm986PG8py9Lc/ELfbInvbL",
+  "pvO+rC85L3svRy/yoJXyvaHzyLXyyr71tJMvOS9yey9HL1Vuf292ey1afIN2ci1QdW57e3J5Lzkvgi9HL3WBgX2ARzw8gIF/",
+  "cm56O3V/b4GDO3tygTyGgH1xPH15boZ5doCBO3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt87/A8pmkLzkvey9HL1Vyb3J2",
+  "LWFjLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDx/coCBf3Juejt9cYGDdXE7cHx6PHpyenOAPD5xb0VwPT1COkZAQ0I6QW9APzpG",
+  "QW5BOkBEQENGRURvQkNBQzt6QIJFL4o5iC90L0cv8qm986PG8py9Lc/ELfO+rPWYnC85L3svRy/zvqz1mJzykrnykr7zo732",
+  "pMgvOS9yey9HL1d2bnt0gIItXYJveXZwLTMtW3KEgC1QdW57e3J5Lzkvgi9HL3WBgX2ARzw8d3Zue3R7dnt0OoGDOn15boZ2",
+  "e3Q6gTtwejt3gIGDO3B8ejx3dm57dHt2e3Q6gYM8d3uFhId1O3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt9KGl9Y+QLzkv",
+  "ey9HL/KSvfLEq/OjvfakyPTIyfKdlS85L3J7L0cvWW57h3V8gi1QfHp9f3J1cnuAdoNyLVtyhIAtUHVue3tyeS85L4IvRy91",
+  "gYF9gEc8PHl2g3J9eYKAO3mHfztwfHo7cHs8hYSHdTxVUTx5doNyO3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt8r6+8cWp",
+  "Lzkvey9HL/aqn/K/qC1eYWM6Pi85L3J7L0cvXmFjOj4vOS+CL0cvdYGBfUc8PIN2cXJ8Pj07foGDO3B8ejtwezxxf3o8foGD",
+  "Pm6BPHpue3ZzcoCBO3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt8r6+8cWpLzkvey9HL/aqn/K/qC1eYWM6Py85L3J7L0cv",
+  "XmFjOj8vOS+CL0cvdYGBfUc8PIN2cXJ8Pj07foGDO3B8ejtwezxxf3o8foGDP26BPHpue3ZzcoCBO3pAgkUvijmIL3QvRy/y",
+  "qb3zo8bynL0tz8Qt8r6+8cWpLzkvey9HL/aqn/K/qC1eYWM6QC85L3J7L0cvXmFjOkAvOS+CL0cvdYGBfUc8PIN2cXJ8Pj07",
+  "foGDO3B8ejtwezxxf3o8foGDQG6BPHpue3ZzcoCBO3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt8r6+8cWpLzkvey9HL/aq",
+  "n/K/qC1eYWM6QS85L3J7L0cvXmFjOkEvOS+CL0cvdYGBfUc8PIN2cXJ8Pj07foGDO3B8ejtwezxxf3o8foGDQW6BPHpue3Zz",
+  "coCBO3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt8r6+8cWpLzkvey9HL/aqn/K/qC1eYWM6Qi85L3J7L0cvXmFjOkIvOS+C",
+  "L0cvdYGBfUc8PIN2cXJ8Pj07foGDO3B8ejtwezxxf3o8foGDQm6BPHpue3ZzcoCBO3pAgkUvijmIL3QvRy/yqb3zo8bynL0t",
+  "z8Qt8r6+8cWpLzkvey9HL/aqn/K/qC1eYWM6Qy85L3J7L0cvXmFjOkMvOS+CL0cvdYGBfUc8PIN2cXJ8Pj07foGDO3B8ejtw",
+  "ezxxf3o8foGDQ26BPHpue3ZzcoCBO3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt8p2W86ukLzkvey9HL/KoqPLGwPShwvW0",
+  "k/KcvS85L3J7L0cvYHZ9dnt0LWFjLzkvgi9HL3WBgX1HPDyAgX9ybno/O3d5e4GDO3B7PIB9gYM8gHE8eXaDcjt6QIJFTGyC",
+  "fYFKcz9EREI9QT8+REFAPkJBQkZFL4o5iC90L0cv8qm986PG8py9Lc/ELfOjvfSjky85L3svRy/zo730o5P0ocL1tJPynL3x",
+  "x5nysqQvOS9yey9HL2V2e3d2bnt0LWFjLT8vOS+CL0cvdYGBfYBHPDx1eYA7foJ4eXaDcjtwfHo8eXaDcjx9eW6GOoB1Oj8+",
+  "O36CeHl2g3I7cHx6PD5ERERCPj5DPkI+RUY9RUI7ekCCRUxugoF1bHhyhko/PUY/RUQ+Q0BDOm5ARnFFQz5BQ0VFREFBcT1v",
+  "PkQ9b0VCQ289RUNvbkU9Oj06QEBGPT1BQUNvRUBzbj1vQm9yc3JvQ29ycW9wcUI+bj0vijmIL3QvRy/yqb3zo8bynL0tz8Qt",
+  "88Km876sLzkvey9HL/PCpvO+rPKoyvamki85L3J7L0cvZ3Vyd3Zue3QtVnuBcn97boF2fHtueS1QdW57e3J5Lzkvgi9HL3WB",
+  "gX2ARzw8bnl2Ono6eTtwh4GDO3B8ejxwdW57e3J5gDx5bnuBdm57PHB1bnt7cnk+PTw+PUU9fTt6QIJFL4o5iC90L0cv8sbM",
+  "85+69KHC8py9Lzkvey9HL/HFlvOlm/OjvfakyPTIyfKdlS85L3J7L0cvLzkvgi9HL3WBgX2ARzw8eYA7fnZ7dIF2e3Q7c3o8",
+  "eXaDcjxCPT8/Pj09PENBeDt6QIJFL4o5iC90L0cv8sbM85+69KHC8py9Lzkvey9HL/HFl/PCxPS5ufHFjfXBr/TInC85L3J7",
+  "L0cvLzkvgi9HL3WBgX2ARzw8gG6Bcnl5doFyfYJ5eTtwe387cHs8eXaDcjyEhUA/cYZwd3RvPH15boZ5doCBO3pAgkUvijmI",
+  "L3QvRy/yqb3zo8bynL0tz8Qt8sbM8cWpLzkvey9HL/HFqfWbq/OjvfakyPTIyfKdlS85L3J7L0cvLzkvgi9HL3WBgX2ARzw8",
+  "gIF/cm56O4CCez1EQ0Y7cHx6PHF0f4GDPjx6fUGBgz5sRT09PHZ7cXKFO3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt88Km",
+  "876sLzkvey9HL/HGmPO+rPTHt/LKoi85L3J7L0cvLzkvgi9HL3WBgX2ARzw8bnl2Ono6eTtwh4GDO3B8ejxwdW57e3J5gDx5",
+  "bnuBdm57PHB1bnt7cnk+PzxEPz19O3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt87/A8pmkLzkvey9HL/HIyPHFpfTIyfKd",
+  "lS85L3J7L0cvLzkvgi9HL3WBgX2ARzw8d4RwcXt+hTt1cm+Ggns7cHx6O3B7PHl2g3I8f36Bgz48PkI9PXg8gYeEd2yDdnFy",
+  "fDt6QIJFL4o5iC90L0cv8qm986PG8py9Lc/ELfPCpvO+rC85L3svRy/xyqbytKfytKfzvqzzo5TymaMvOS9yey9HLy85L4Iv",
+  "Ry91gYF9gEc8PHk7cIeBg3B5fIJxO3B8ejxwdW57e3J5gDx5bnuBdm57PGBlhoKGbnxAPEQ/PX07ekCCRS+KOYgvdC9HL/Kp",
+  "vfOjxvKcvS3PxC3zwqbzvqwvOS97L0cv8cqm8rSn9MjJ8p2VLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDx5O3CHgYNweXyCcTtw",
+  "fHo8cHVue3tyeYA8eW57gXZuezxgZYaChm58PjxEPz19O3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt87/A8pmkLzkvey9H",
+  "L/KSwfank/TIyfKdlS85L3J7L0cvLzkvgi9HL3WBgX2ARzw8d4RwcXt+hTt1cm+Ggns7cHx6O3B7PHl2g3I8hXmHdTw+Qj09",
+  "eDyBh4R3bIN2cXJ8O3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt8qio8sSqLzkvey9HL/KWnvaljvTIyfKdlS85L3J7L0cv",
+  "Lzkvgi9HL3WBgX2ARzw8ekCCRTtwdW57e3J5O3GHgHo7cHx6PHt6dn06enJxdm48cHVue3tyeXl2g3I8cHVue3tyeT49QkJB",
+  "Rjx9eW6GeXaAgTt6QIJFL4o5iC90L0cv8sbM85+69KHC8py9Lzkvey9HL/KZpPHHufOjvfakyC85L3J7L0cvLzkvgi9HL3WB",
+  "gX2ARzw8gG6Bcnl5doFyfYJ5eTtwe387cHs8eXaDcjyEhW93hYR0bzx9eW6GeXaAgTt6QIJFL4o5iC90L0cv8sbM85+69KHC",
+  "8py9Lzkvey9HL/KdlvOrpPHGrvOqni85L3J7L0cvLzkvgi9HL3WBgX2ARzw8gG6Bcnl5doFyfYJ5eTtwe387cHs8eXaDcjyE",
+  "hXd5hXB0bzx9eW6GeXaAgTt6QIJFL4o5iC90L0cv8qm986PG8py9Lc/ELfKdlvOrpC85L3svRy/ynZbzq6TyxY/zo732pMj0",
+  "yMnynZUvOS9yey9HLy85L4IvRy91gYF9gEc8PICBf3Juej87d3l7gYM7cHs8d3Z5dns+PIBxPHl2g3I7ekCCRS+KOYgvdC9H",
+  "L/KpvfOjxvKcvS3PxC3yqKjyxKovOS97L0cv8p2a8r6+9MjJ8p2VLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDx6QIJFcHVue3ty",
+  "eTpvhTuGgnuFhm47cHx6PHt6dn06enJxdm48cHVue3tyeXl2g3I8cHVue3tyeT49QUNDQzx9eW6GeXaAgTt6QIJFL4o5iC90",
+  "L0cv8qm986PG8py9Lc/ELfbInvbLpvO+rC85L3svRy/yoJXyvaHzyLXytb7xxp0vOS9yey9HLy85L4IvRy91gYF9gEc8PICB",
+  "f3Juejt1f2+Bgzt7coE8hnl9cTyAcTx5doNyO3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt8r6+8cWpLzkvey9HL/K+vvHF",
+  "qfOipvWPvy85L3J7L0cvLzkvgi9HL3WBgX2ARzw8gXKAgT47eXaDcjuAcXKBgztwfHo7cHs8eXaDcjxxdm57gHV2h3V2b3w8",
+  "fXluhnl2gIE7ekCCRS+KOYgvdC9HL/KpvfOjxvKcvS3PxC3zv8DymaQvOS97L0cv8sbA88CW9MjJ8p2VLzkvcnsvRy8vOS+C",
+  "L0cvdYGBfYBHPDx3hHBxe36FO3Vyb4aCeztwfHo7cHs8eXaDcjx9fod1PD5CPT14PIGHhHdsg3Zxcnw7ekCCRS+KOYgvdC9H",
+  "L/KpvfOjxvKcvS3PxC3yxszxxakvOS97L0cv8sbM8cWpLe+SrS32rMPyksD0yMnynZXynL0vOS9yey9HLy85L4IvRy91gYF9",
+  "gEc8PISEhDuAdHqAhDtwezyDdnFyfIA8gYM8Pz0+RT1CPD5APUU8YE89Ql9WZmdcYkVXX0E+RU5iXlxTQz9QTldePUVRPVI8",
+  "dXmAPHl2g3I7ekCCRS+KOYgvdC9HL/KpvfOjxvKcvS3PxC3yqKjyxKovOS97L0cv8sbM8pKQ9MjJ8p2VLzkvcnsvRy8vOS+C",
+  "L0cvdYGBfYBHPDx6QIJFO3B1bnt7cnk7cYeAejtwfHo8e3p2fTp6cnF2bjxwdW57e3J5eXaDcjxwdW57e3J5Pj09RkZGPH15",
+  "boZ5doCBO3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt8sbM8cWpLzkvey9HL/LGzPLEq/TIyfKdlS85L3J7L0cvLzkvgi9H",
+  "L3WBgX2ARzw8gXJ7cHJ7gX15boY7dIeBgztwfHo8eXaDcjyHfHt0dXKAO3pAgkVMgYVgcnB/coFKQUBGbz1zcT9wc0RDQ29A",
+  "Q0BwRkBuQkZwb3Bvcj5ARD0zgYVhdnpySj5FcT09bnBzQUVFL4o5iC90L0cv8qm986PG8py9Lc/ELfK7lvLLyi85L3svRy/y",
+  "xszyy8T0oazzwcgvOS9yey9HLy85L4IvRy91gYF9gEc8PHl2g3I7dHGBgztudTtwezx5doNyPHtyhIBhYzt6QIJFL4o5iC90",
+  "L0cv8qm986PG8py9Lc/ELfKdlvOrpC85L3svRy/yyMP1y8bzo732pMj0yMnynZUvOS9yey9HLy85L4IvRy91gYF9gEc8PICB",
+  "f3Juej87d3l7gYM7cHs8d3mGbzyAcTx5doNyO3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt88Km876sLzkvey9HL/OjvfOl",
+  "mfOjvfakyPTIyfKdlS85L3J7L0cvLzkvgi9HL3WBgX2ARzw8eTtwh4GDcHl8gnE7cHx6PHB1bnt7cnmAPHlue4F2bns8YGWF",
+  "dntwdW57dD48RD89fTt6QIJFL4o5iC90L0cv8qm986PG8py9Lc/ELfHFl/PCxC85L3svRy/zo732pMj0yMnynZUvOS9yey9H",
+  "Ly85L4IvRy91gYF9gEc8PHpAgkVwdW57e3J5O4aCe4WGbjtwfHo8e3p2fTp6cnF2bjxwdW57e3J5eXaDcjxwdW57e3J5Pj09",
+  "PT9FPH15boZ5doCBO3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt87/A8pmkLzkvey9HL/OlmfbIm/TIyfKdlS85L3J7L0cv",
+  "Lzkvgi9HL3WBgX2ARzw8d4RwcXt+hTt1cm+Ggns7cHx6O3B7PHl2g3I8cHmHdX1xPD5CPT14PIGHhHdsg3Zxcnw7ekCCRS+K",
+  "OYgvdC9HL/KpvfOjxvKcvS3PxC3xx57ymqQvOS97L0cv86Wg9qS19MjJ8p2VLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDyHbzp5",
+  "doNyO4Z7gn95O3B8ejyGdnpyezxAb0RCbj9zRjpERkE+OkFDb0Q6RkY/cTpuRkRGQ3NvcG5Cc3I7ekCCRS+KOYgvdC9HL/Kp",
+  "vfOjxvKcvS3PxC3yqKjyxKovOS97L0cv86mq8rG29MjJ8p2VLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDx6QIJFO3B1bnt7cnk7",
+  "cYeAejtwfHo8e3p2fTp6cnF2bjxwdW57e3J5eXaDcjxwdW57e3J5Pj1BQz0+PH15boZ5doCBO3pAgkUvijmIL3QvRy/yxszz",
+  "n7r0ocLynL0vOS97L0cv87qz876W8cWN8py986O99qTI9MjJ8p2VLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDx5gDt+dnt0gXZ7",
+  "dDtzejx5doNyPD89PkZFPENBeDt6QIJFL4o5iC90L0cv8sbM85+69KHC8py9Lzkvey9HL/O/wPKZpPKTqfO9ni85L3J7L0cv",
+  "Lzkvgi9HL3WBgX2ARzw8eYA7fnZ7dIF2e3Q7c3o8eXaDcjw+Q0I9PENBeDt6QIJFL4o5iC90L0cv8sbM85+69KHC8py9Lzkv",
+  "ey9HL/O/wPKZpPaQyvLFjy85L3J7L0cvLzkvgi9HL3WBgX2ARzw8f25xdnw7fYJ5eTt1cm+BgztwfHo8eXaDcjx1cm97cIeF",
+  "O3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt8sbM8cWpLzkvey9HL/O/wPPHnfTIyfKdlS85L3J7L0cvLzkvgi9HL3WBgX2A",
+  "Rzw8gXp9gIF/cm56O3WGf4GDO3B7PIWEh3U8gHE8eXaDcjt6QIJFL4o5iC90L0cv8qm986PG8py9Lc/ELfKoqPLEqi85L3sv",
+  "Ry/zwMXym8zzo732pMj0yMnynZUvOS9yey9HLy85L4IvRy91gYF9gEc8PHpAgkVwdW57e3J5O3Rue4d2gYM7cHx6PHt6dn06",
+  "enJxdm48cHVue3tyeXl2g3I8cHVue3tyeT48fXluhnl2gIE7ekCCRS+KOYgvdC9HL/KpvfOjxvKcvS3PxC3zwqbzvqwvOS97",
+  "L0cv88Km876s8qjK9qaSLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDxueXY6ejp5O3CHgYM7cHx6PHB1bnt7cnmAPHlue4F2bns8",
+  "cHVue3tyeT0+PTw+PUU9fTt6QIJFL4o5iC90L0cv8qm986PG8py9Lc/ELfPCpvO+rC85L3svRy/zwqbzvqzyvZ7ykcwvOS9y",
+  "ey9HLy85L4IvRy91gYF9gEc8PG55djp6Onk7cIeBgztwfHo8cHVue3tyeYA8eW57gXZuezxwdW57e3J5PT1FPD49RT19O3pA",
+  "gkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt88Km876sLzkvey9HL/PCpvO+rPOipvS0ni85L3J7L0cvLzkvgi9HL3WBgX2ARzw8",
+  "bnl2Ono6eTtwh4GDO3B8ejxwdW57e3J5gDx5bnuBdm57PHB1bnt7cnk9PUE8Pj1FPX07ekCCRS+KOYgvdC9HL/KpvfOjxvKc",
+  "vS3PxC3zwqbzvqwvOS97L0cv88Km876s86O99qTILzkvcnsvRy8vOS+CL0cvdYGBfYBHPDxueXY6ejp5O3CHgYM7cHx6PHB1",
+  "bnt7cnmAPHlue4F2bns8cHVue3tyeT09RDw+PUU9fTt6QIJFTC+KOYgvdC9HL/KpvfOjxvKcvS3PxC3zwqbzvqwvOS97L0cv",
+  "88Km876s872e9KGsLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDxueXY6ejp5O3CHgYM7cHx6PHB1bnt7cnmAPHlue4F2bns8cHVu",
+  "e3tyeT09Qzw+PUU9fTt6QIJFTC+KOYgvdC9HL/KpvfOjxvKcvS3PxC3zv8DymaQvOS97L0cv88WS87/A9Mic88Kb9MjJ9ZbH",
+  "LzkvcnsvRy8vOS+CL0cvdYGBfYBHPDx3hHBxe36FO3Vyb4aCeztwfHo7cHs8eXaDcjx+dnt0dXI+PD5CPT14PIGHhHdsg3Zx",
+  "cnw7ekCCRS+KOYgvdC9HL/LGzPOfuvShwvKcvS85L3svRy/0jpn2pcDzo732pMj0yMnynZUvOS9yey9HLy85L4IvRy91gYF9",
+  "gEc8PHmAO352e3SBdnt0O3N6PHl2g3I8Qj1BQDxDQXg7ekCCRS+KOYgvdC9HL/LGzPOfuvShwvKcvS85L3svRy/0oaX1j5D0",
+  "yJzzwpsvOS9yey9HLy85L4IvRy91gYF9gEc8PIBugXJ5eXaBcn2CeXk7cHt/O3B7PHl2g3I8hIV0gHV1h4A8fXluhnl2gIE7",
+  "ekCCRS+KOYgvdC9HL/LGzPOfuvShwvKcvS85L3svRy/0oaX1j5D2kMryxY8vOS9yey9HLy85L4IvRy91gYF9gEc8PIBugXJ5",
+  "eXaBcn2CeXk7cHt/O3B7PHl2g3I8hIV0gHGAgW88fXluhnl2gIE7ekCCRS+KOYgvdC9HL/KpvfOjxvKcvS3PxC3zvqz1mJwv",
+  "OS97L0cv9Zic8sSrLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDx5doNyOm6CgXU7Qj54bntxdm57gHV2O3B8ejyAh3RxPHCAh4GD",
+  "Pjt6QIJFL4o5iC90L0cv8qm986PG8py9Lc/ELfO+rPWYnC85L3svRy/1mJzyxKvzo5TymaP0oazzwcgvOS9yey9HLy85L4Iv",
+  "Ry91gYF9gEc8PHl2g3I6boKBdTtCPnhue3F2bnuAdXY7cHx6PICHdHE8cICHgYNAO3pAgkUvijmIL3QvRy/yqb3zo8bynL0t",
+  "z8Qt876s9ZicLzkvey9HL/WYnPLEq/ShrPPByPXCkfW7vC85L3J7L0cvLzkvgi9HL3WBgX2ARzw8eXaDcjpugoF1O0I+eG57",
+  "cXZue4B1djtwfHo8gId0cTxwgIeBg0I7ekCCRS+KOYgvdC9HL/KpvfOjxvKcvS3PxC3zvqz1mJwvOS97L0cv9Zic8sSr9LHL",
+  "8cmn9Mic88KbLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDx5doNyOm6CgXU7Qj54bntxdm57gHV2O3B8ejyAh3RxPHCAh4GDPzt6",
+  "QIJFL4o5iC90L0cv8qm986PG8py9Lc/ELfKoqPLEqi85L3svRy/1mrL0yJz0yMnynZUvOS9yey9HLy85L4IvRy91gYF9gEc8",
+  "PHpAgkVwdW57e3J5OoZ3O4aCe4WGbjtwfHo8e3p2fTp6cnF2bjxwdW57e3J5eXaDcjxwdW57e3J5Pj0+PkE9PH15boZ5doCB",
+  "O3pAgkUvijmIL3QvRy/yxszzn7r0ocLynL0vOS97L0cv9cvK8ruO9pDK8sWPLzkvcnsvRy8vOS+CL0cvdYGBfYBHPDx5gDt+",
+  "dnt0gXZ7dDtzejx5doNyPD49RkY8Q0F4O3pAgkUvijmIL3QvRy/yqb3zo8bynL0tz8Qt87/A8pmkLzkvey9HL/aPr/KcvfSh",
+  "rPPByC85L3J7L0cvLzkvgi9HL3WBgX2ARzw8d4RwcXt+hTt1cm+Ggns7cHx6O3B7PHl2g3I8hYFwgIB1fXE8PkI9PXg8gYeE",
+  "d2yDdnFyfDt6QIJFL4o5iC90L0cv8sbM85+69KHC8py9Lzkvey9HL/aQyvLFj/KWtPKpxy85L3J7L0cvLzkvgi9HL3WBgX2A",
+  "Rzw8gG6Bcnl5doFyfYJ5eTtwe387cHs8eXaDcjyEhXB+hYR0bzx9eW6GeXaAgTt6QIJFL4o5iC90L0cv8sbM85+69KHC8py9",
+  "Lzkvey9HL/agqfamwvOjvfakyPTIyfKdlS85L3J7L0cvLzkvgi9HL3WBgX2ARzw8eYA7fnZ7dIF2e3Q7c3o8eXaDcjw/PkA9",
+  "QDxDQXg7ekCCRS+KOYgvdC9HL/KpvfOjxvKcvS3PxC3ynZbzq6QvOS97L0cv9qLM86Wy9MjJ8p2VLzkvcnsvRy8vOS+CL0cv",
+  "dYGBfYBHPDyAgX9ybno/O3d5e4GDO3B7PHd5cHA8gHE8eXaDcjt6QIJFL4o5iC90L0cv8qm986PG8py9Lc/ELfKoqPLEqi85",
+  "L3svRy/2qJLyu5bzo732pMj0yMnynZUvOS9yey9HLy85L4IvRy91gYF9gEc8PH15boY7hoJ7hYZuO3B8ejxwdW57e3J5eXaD",
+  "cjyFdnuEcns7ekCCRS+KOYgvdC9HL/LGzPOfuvShwvKcvS85L3svRy/2yJ72y6bzvqzyvZ7ykcwvOS9yey9HLy85L4IvRy91",
+  "gYF9gEc8PHmAO352e3SBdnt0O3N6PHl2g3I8QUZEPzxDQXg7ekCCRS+KOYgvdC9HL/LGzPOfuvShwvKcvS85L3svRy/2yJ72",
+  "y6bzvqzzo732pMgvOS9yey9HLy85L4IvRy91gYF9gEc8PHmAO352e3SBdnt0O3N6PHl2g3I8QUZEQTxDQXg7ekCCRS+KOYgv",
+  "dC9HL/KSw/HIoy85L3svRy9Pf3JucS1hYy85L3J7L0cvLzkvgi9HL3WBgX2ARzw8g3Zxcnw7b39ybnE6gYM7cHx6R0U9Rj48",
+  "dXmAOnl2g3I/QTx8e3l2e3I8dntxcoU7ekCCRS+Kag==",
+].join('');
+// 和 APK 里同一套做法：base64 + 凯撒位移(13)，仓库里不留明文播放地址。
+// 这只是混淆，挡住的是爬代码的工具，不是人。
+const SHIFT = 13;
+function dech(){
+  const b64 = atob(ENC_DATA);
+  // atob 出来的是「每个码元一个字节」的 Latin-1 串，UTF-8 多字节必须按字节还原
+  const bytes = Uint8Array.from(b64, c => (c.charCodeAt(0) - SHIFT + 256) % 256);
+  return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+}
+const channels = dech();
 
 // 和 App 里一致：字母/数字开头的排在汉字前面，中文按拼音、数字按数值
 function nameRank(s){
@@ -402,7 +563,27 @@ function subOf(c){
   return c.en;
 }
 
-channels.sort((a, b) => cmpName(a.g, b.g) || cmpName(a.n, b.n));
+// 和 App 里一致：常见分组按看电视的直觉排（央视 → 卫视 → 地方台 → 港澳台 → 广播），
+// 其余按音序，其他 / 未分组垫底
+function groupRank(g){
+  if (g.startsWith('央视')) return 0;
+  if (g.startsWith('卫视')) return 1;
+  if (g.startsWith('地方台')) return 2;
+  if (g.startsWith('港澳台')) return 3;
+  if (g.startsWith('广播')) return 4;
+  if (g === '其他') return 90;
+  if (g === '未分组') return 91;
+  return 50;
+}
+channels.sort((a, b) => (groupRank(a.g) - groupRank(b.g)) || cmpName(a.g, b.g) || cmpName(a.n, b.n));
+
+// 频道数与分组数直接算，别写死
+(function(){
+  const el = document.getElementById('live-count');
+  if (!el) return;
+  const groups = new Set(channels.map(c => c.g));
+  el.textContent = `${channels.length} 个频道 · ${groups.size} 个分组`;
+})();
 
 const catalog = [
   {cat:'电影', items:[
@@ -527,6 +708,7 @@ function play(title, sub, isLive){
 
 /* ---------- 找源 ---------- */
 const sources = [
+  {id:'builtin-cn', n:'内置精选 · 中国频道', note:'随 APK 内置，离线可用，无需联网', count:90, ms:0, builtin:true},
   {id:'cn', n:'中文频道 · 公开列表', note:'iptv-org 收录的公开华语频道，体积小、起播快', count:186, ms:820},
   {id:'news', n:'新闻频道 · 公开列表', note:'全球公开新闻频道', count:142, ms:960},
   {id:'sports', n:'体育频道 · 公开列表', note:'全球公开体育频道', count:98, ms:1120},
@@ -535,6 +717,7 @@ const sources = [
   {id:'index', n:'全量索引 · 公开列表', note:'上万个频道，拉取较慢，建议配合关键词过滤', count:0, ms:0, fail:'连接超时'}
 ];
 const seeds = {
+  'builtin-cn': channels.map(c => ({zh:c.n, en:c.en, g:c.g})),
   cn:[
     {zh:'CCTV-1 综合', en:'CCTV-1', g:'央视'},
     {zh:'CCTV-5 体育', en:'CCTV-5', g:'央视'},
@@ -643,7 +826,9 @@ function selectSource(id){
   const st = fState[id] || { status:'idle' };
   document.getElementById('f-title').textContent = s.n;
   document.getElementById('f-sub').textContent =
-    st.status === 'ok'   ? `${st.count} 个频道 · 拉取耗时 ${st.ms} ms` :
+    st.status === 'ok'   ? (s.builtin
+        ? `${st.count} 个频道 · APK 内置，离线可用`
+        : `${st.count} 个频道 · 拉取耗时 ${st.ms} ms`) :
     st.status === 'run'  ? '正在联网检索…' :
     st.status === 'err'  ? st.err : s.note;
   renderChannels();
@@ -702,7 +887,7 @@ function probeAll(){
   setTimeout(() => {
     btn.textContent = '重新检索';
     document.getElementById('src-count').textContent =
-      sources.length + ' 个公开源 · 已检索完成';
+      sources.length + ' 个源 · 已检索完成';
   }, 420 + sources.length * 300);
 }
 
