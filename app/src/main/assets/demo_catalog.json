@@ -1,0 +1,113 @@
+{
+  "name": "内置演示片库",
+  "categories": [
+    {
+      "name": "电影",
+      "items": [
+        {
+          "title": "Big Buck Bunny",
+          "year": "2008",
+          "rating": "8.1",
+          "poster": "https://storage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
+          "desc": "一只大块头兔子被三只啮齿动物欺负后决定反击。Blender 基金会出品的开源动画短片，常被用作视频编解码测试片。",
+          "episodes": [
+            { "name": "正片", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" }
+          ]
+        },
+        {
+          "title": "Elephants Dream",
+          "year": "2006",
+          "rating": "7.6",
+          "poster": "https://storage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg",
+          "desc": "世界上第一部完全用开源软件制作的动画电影，讲述两个角色在一台奇异机器中的旅程。",
+          "episodes": [
+            { "name": "正片", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" }
+          ]
+        },
+        {
+          "title": "Sintel",
+          "year": "2010",
+          "rating": "7.7",
+          "poster": "https://storage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg",
+          "desc": "少女 Sintel 穿越荒原寻找她的小龙伙伴，一部由 Blender 基金会制作的奇幻短片。",
+          "episodes": [
+            { "name": "正片", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4" }
+          ]
+        },
+        {
+          "title": "Tears of Steel",
+          "year": "2012",
+          "rating": "6.9",
+          "poster": "https://storage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg",
+          "desc": "未来阿姆斯特丹，一群人试图阻止机器人毁灭世界。真人拍摄与 CG 结合的技术演示片。",
+          "episodes": [
+            { "name": "正片", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "短片",
+      "items": [
+        {
+          "title": "For Bigger Blazes",
+          "year": "2013",
+          "rating": "6.2",
+          "poster": "https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg",
+          "desc": "Chromecast 宣传短片之一，适合用来测试播放器起播速度与短内容跳转。",
+          "episodes": [
+            { "name": "短片", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" }
+          ]
+        },
+        {
+          "title": "For Bigger Escapes",
+          "year": "2013",
+          "rating": "6.0",
+          "poster": "https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerEscapes.jpg",
+          "desc": "另一支 Chromecast 宣传短片，画面节奏快，便于观察解码与画面同步表现。",
+          "episodes": [
+            { "name": "短片", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" }
+          ]
+        },
+        {
+          "title": "For Bigger Fun",
+          "year": "2013",
+          "rating": "6.1",
+          "poster": "https://storage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerFun.jpg",
+          "desc": "短时长示例视频，用于验证连播与播放完成后的行为。",
+          "episodes": [
+            { "name": "短片", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "剧集（多集示例）",
+      "items": [
+        {
+          "title": "公路之旅",
+          "year": "2014",
+          "rating": "7.2",
+          "poster": "https://storage.googleapis.com/gtv-videos-bucket/sample/images/WeAreGoingOnBullrun.jpg",
+          "desc": "多集结构示例：详情页会出现剧集列表，可按集切换播放。数据完全来自本地 JSON，可替换为你自己的片源。",
+          "episodes": [
+            { "name": "第 1 集", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4" },
+            { "name": "第 2 集", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4" },
+            { "name": "第 3 集", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4" }
+          ]
+        },
+        {
+          "title": "车评现场",
+          "year": "2015",
+          "rating": "6.8",
+          "poster": "https://storage.googleapis.com/gtv-videos-bucket/sample/images/VolkswagenGTIReview.jpg",
+          "desc": "多集示例之二，用于验证剧集网格的焦点移动与记忆播放。",
+          "episodes": [
+            { "name": "第 1 集", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4" },
+            { "name": "第 2 集", "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4" }
+          ]
+        }
+      ]
+    }
+  ]
+}

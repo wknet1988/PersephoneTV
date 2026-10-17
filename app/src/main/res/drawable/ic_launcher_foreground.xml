@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 自适应图标前景：安全区内绘制播放三角 -->
+    <path
+        android:pathData="M54,54m-24,0a24,24 0,1 0,48 0a24,24 0,1 0,-48 0"
+        android:fillColor="#FF1F2733" />
+    <path
+        android:pathData="M46,41L46,67L69,54Z"
+        android:fillColor="#FFFF4D4F" />
+</vector>

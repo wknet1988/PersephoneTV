@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Persephone TV</string>
+    <string name="tab_live">直播</string>
+    <string name="tab_vod">影视</string>
+    <string name="tab_settings">设置</string>
+</resources>

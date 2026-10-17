@@ -1,0 +1,15 @@
+#EXTM3U
+#EXTINF:-1 tvg-logo="" group-title="演示频道",Mux 多码率测试台
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-logo="" group-title="演示频道",Apple BipBop
+https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8
+#EXTINF:-1 tvg-logo="" group-title="演示频道",Sintel 预告
+https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8
+#EXTINF:-1 tvg-logo="" group-title="演示频道",Tears of Steel
+https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8
+#EXTINF:-1 tvg-logo="" group-title="演示频道",Akamai 示例流
+https://bitdash-a.akamaihd.net/content/MI201109210084_1/m3u8s/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.m3u8
+#EXTINF:-1 tvg-logo="" group-title="本地/局域网",本机示例（HLS）
+https://test-streams.mux.dev/pts_shift/master.m3u8
+#EXTINF:-1 tvg-logo="" group-title="本地/局域网",局域网示例占位
+http://192.168.1.10:8080/live/stream.m3u8

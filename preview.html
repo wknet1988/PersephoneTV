@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>Persephone TV · 界面预览</title>
+<style>
+  :root{
+    --bg:#0a0c11; --bg-deep:#06080c; --s1:#151a22; --s2:#1f2733; --s3:#2b3542;
+    --accent:#ff4d4f; --amber:#ffb020;
+    --t1:#f3f6fa; --t2:#9aa6b2; --t3:#6c7885; --line:#262f3b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:#05060a; color:var(--t1);
+    font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  #app{
+    width:1280px; height:720px; position:relative; display:flex;
+    background:var(--bg); overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,.75);
+    transform-origin:center center;
+  }
+  /* ---------- 侧边栏 ---------- */
+  .rail{
+    width:112px; flex:0 0 112px; background:var(--bg-deep);
+    padding:30px 0; display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .logo{width:38px;height:38px;border-radius:11px;background:var(--accent);display:grid;place-items:center;margin-bottom:24px}
+  .logo:after{content:"";width:0;height:0;border-left:13px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent;margin-left:3px}
+  .rail-item{
+    width:84px;height:60px;border-radius:12px;display:flex;align-items:center;gap:8px;
+    padding-left:12px; color:var(--t2); font-size:14px; cursor:pointer;
+    transition:transform .15s ease, background .15s ease, color .15s ease;
+    border:2px solid transparent;
+  }
+  .rail-item .bar{width:3px;height:10px;background:transparent;border-radius:2px;transition:height .15s}
+  .rail-item.on{background:rgba(31,39,51,.62);color:var(--t1);font-weight:600}
+  .rail-item.on .bar{height:26px;background:var(--accent)}
+  .rail-item.focused{background:var(--s2);border-color:#fff;color:var(--t1);transform:scale(1.06)}
+  .rail-item.focused .bar{height:26px;background:var(--accent)}
+  .rail-ver{margin-top:auto;color:var(--t3);font-size:10px}
+
+  /* ---------- 舞台 ---------- */
+  #stage{flex:1;position:relative;overflow:hidden}
+  .screen{position:absolute;inset:0;display:none;overflow:hidden}
+  .screen.active{display:block}
+
+  /* 直播 */
+  .live-wrap{display:flex;height:100%}
+  .ch-list{width:430px;flex:0 0 430px;background:rgba(21,26,34,.42);padding:26px 0 0;display:flex;flex-direction:column}
+  .ch-head{padding:0 26px 12px}
+  .ch-head h1{font-size:26px;font-weight:600;letter-spacing:.5px}
+  .ch-head p{color:var(--t3);font-size:12px;margin-top:5px}
+  .ch-scroll{overflow:hidden;padding:4px 18px 20px;flex:1}
+  .ch-group{color:var(--amber);font-size:12px;font-weight:600;padding:14px 10px 6px}
+  .ch{
+    height:64px;border-radius:9px;display:flex;align-items:center;gap:0;padding:0 12px;
+    color:var(--t2);font-size:14px;cursor:pointer;transition:all .15s ease;border:2px solid transparent;
+  }
+  .ch .num{width:30px;color:var(--t3);font-size:12px}
+  .ch .nm{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0;line-height:1.35}
+  .ch .nm b{font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ch .nm i{font-style:normal;font-size:10px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ch .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:0}
+  .ch.sel{background:rgba(21,26,34,.9)}
+  .ch.sel .dot{opacity:1}
+  .ch.focused{background:var(--s2);color:var(--t1);font-weight:600;border-color:var(--accent);transform:scale(1.02)}
+  .ch.focused .nm b{font-weight:600;color:var(--t1)}
+  .ch.focused .nm i{color:var(--t2)}
+  .ch.focused .num{color:var(--accent)}
+  .pv-en{color:var(--t3);font-size:15px;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .preview{flex:1;display:grid;place-items:center;background:radial-gradient(120% 90% at 30% 20%,#10161f,#06080c 70%)}
+  .pv{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 56px}
+  .pv-badge{width:168px;height:168px;border-radius:50%;background:var(--s1);display:grid;place-items:center;position:relative}
+  .pv-badge:before{content:"";position:absolute;width:96px;height:96px;border-radius:50%;background:rgba(255,77,79,.14)}
+  .pv-badge:after{content:"";width:0;height:0;border-left:32px solid var(--accent);border-top:20px solid transparent;border-bottom:20px solid transparent;margin-left:8px}
+  .pv h2{font-size:40px;font-weight:700;margin-top:28px;letter-spacing:.5px}
+  .pv .meta{display:flex;align-items:center;gap:10px;margin-top:12px;color:var(--t2);font-size:13px}
+  .live-tag{background:rgba(255,77,79,.16);color:var(--accent);font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px}
+  .pv .url{color:var(--t3);font-size:11px;margin-top:8px;max-width:520px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pv .keys{margin-top:34px;display:flex;align-items:center;gap:8px;color:var(--t3);font-size:13px}
+  .kbd{background:var(--s2);color:var(--t1);font-size:12px;font-weight:600;padding:5px 10px;border-radius:6px}
+  .btn{margin-top:24px;background:var(--accent);color:#fff;font-size:16px;font-weight:600;padding:13px 30px;border-radius:10px;cursor:pointer;border:2px solid transparent;transition:all .15s}
+  .btn.focused{background:#fff;color:var(--bg);transform:scale(1.05)}
+  .btn.ghost{background:var(--s3)}
+  .btn.ghost.focused{background:#fff;color:var(--bg)}
+
+  /* 影视 */
+  .vod{padding:30px 54px;height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+  .vod::-webkit-scrollbar{display:none}
+  .vod h1{font-size:40px;font-weight:700}
+  .vod .sub{color:var(--t3);font-size:12px;margin-top:6px}
+  .cat{margin-top:26px}
+  .cat-t{display:flex;align-items:center;gap:9px;font-size:19px;font-weight:600}
+  .cat-t .bar{width:3px;height:17px;background:var(--accent)}
+  .cat-t .n{margin-left:auto;color:var(--t3);font-size:12px;font-weight:400}
+  .row{display:flex;gap:18px;margin-top:14px}
+  .card{width:150px;cursor:pointer;transition:transform .15s ease}
+  .poster{width:150px;height:218px;border-radius:12px;position:relative;overflow:hidden;border:3px solid transparent;transition:all .15s}
+  .poster .ph{position:absolute;inset:0;display:grid;place-items:center;font-size:44px;font-weight:700;color:rgba(243,246,250,.22)}
+  .poster .rate{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.62);color:var(--accent);font-size:12px;font-weight:700;padding:3px 7px;border-radius:6px}
+  .card .t{margin-top:9px;font-size:14px;color:var(--t1)}
+  .card .m{font-size:12px;color:var(--t3);margin-top:2px}
+  .card.focused{transform:scale(1.07)}
+  .card.focused .poster{border-color:#fff}
+
+  /* 详情 */
+  .detail{height:100%;position:relative;background:linear-gradient(90deg,#0a0c11 0%,rgba(10,12,17,.94) 45%,rgba(10,12,17,.72) 75%,rgba(10,12,17,.55) 100%)}
+  .detail .bgimg{position:absolute;inset:0;background:linear-gradient(135deg,#1b2430,#0d1218 60%,#201419)}
+  .detail .body{position:relative;padding:54px 64px 40px;height:100%;display:flex;flex-direction:column}
+  .dposter{
+    position:absolute; right:72px; top:50%; transform:translateY(-50%);
+    width:268px; height:386px; border-radius:16px; overflow:hidden;
+    border:1px solid rgba(255,255,255,.12);
+    display:grid; place-items:center; font-size:76px; font-weight:700; color:rgba(243,246,250,.2);
+  }
+  .detail .cat{color:var(--accent);font-size:12px;font-weight:600}
+  .detail h1{font-size:40px;font-weight:700;margin-top:10px}
+  .detail .meta{display:flex;gap:16px;color:var(--t2);font-size:14px;margin-top:14px;align-items:center}
+  .detail .meta .r{color:var(--amber);font-weight:700;font-size:15px}
+  .detail .desc{color:var(--t2);font-size:14px;line-height:23px;margin-top:18px;max-width:640px}
+  .actions{display:flex;gap:14px;align-items:center;margin-top:28px}
+  .src{margin-top:auto;color:var(--t3);font-size:11px;display:flex;gap:8px;align-items:center}
+  .src .tag2{background:var(--s1);border-radius:6px;padding:4px 9px;color:var(--t2)}
+  .eps{margin-top:auto}
+  .eps h3{font-size:16px;font-weight:600;margin-bottom:12px}
+  .ep-row{display:flex;gap:10px}
+  .ep{width:104px;height:46px;border-radius:8px;background:var(--s1);display:grid;place-items:center;font-size:13px;color:var(--t2);cursor:pointer;border:2px solid transparent;transition:all .15s}
+  .ep.focused{background:var(--s2);color:var(--t1);border-color:var(--accent);transform:scale(1.06)}
+
+  /* 设置 */
+  .settings{padding:26px 54px 22px;height:100%;display:flex;gap:48px;overflow:hidden}
+  .settings .col-l{flex:1;min-width:0;overflow-y:auto;scrollbar-width:none;padding-bottom:10px}
+  .settings .col-l::-webkit-scrollbar{display:none}
+  .settings .col-r{width:400px;flex:0 0 400px}
+  .settings::-webkit-scrollbar{display:none}
+  .settings h1{font-size:40px;font-weight:700}
+  .settings .sub{color:var(--t3);font-size:12px;margin-top:6px}
+  .field-lab{display:flex;align-items:center;gap:9px;font-size:19px;font-weight:600;margin:19px 0 10px}
+  .field-lab .bar{width:3px;height:17px;background:var(--accent)}
+  .field{height:58px;border:1px solid var(--line);border-radius:10px;background:var(--s1);display:flex;align-items:center;padding:0 16px;color:var(--t1);font-size:15px;transition:all .15s}
+  .field.ph{color:var(--t3)}
+  .field.focused{border-color:var(--accent);box-shadow:0 0 0 1px rgba(255,77,79,.5)}
+  .hint{color:var(--t3);font-size:11px;margin-top:6px}
+  .keys-table{width:100%;background:rgba(21,26,34,.5);border-radius:12px;padding:16px;margin-top:12px}
+  .keys-table .r{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px}
+  .keys-table .r:last-child{margin-bottom:0}
+  .keys-table .k{background:var(--s1);border-radius:6px;padding:5px 10px;color:var(--t1);font-weight:500;width:190px}
+  .keys-table .d{color:var(--t2)}
+
+  /* 找源 */
+  .finder{display:flex;height:100%;padding:28px 46px 26px}
+  .finder .left{width:430px;flex:0 0 430px;display:flex;flex-direction:column;min-width:0}
+  .finder .right{flex:1;display:flex;flex-direction:column;padding-left:26px;min-width:0}
+  .f-head{display:flex;align-items:center;gap:12px}
+  .src-list{margin-top:18px;overflow-y:auto;flex:1;scrollbar-width:none}
+  .src-list::-webkit-scrollbar{display:none}
+  .src-row{height:74px;border-radius:10px;display:flex;align-items:center;padding:0 12px;cursor:pointer;border:2px solid transparent;transition:all .15s;margin-bottom:6px}
+  .src-row .bar{width:3px;height:12px;background:transparent;border-radius:2px;transition:height .15s}
+  .src-row.sel{background:rgba(21,26,34,.9)}
+  .src-row.sel .bar{height:34px;background:var(--accent)}
+  .src-row.focused{background:var(--s2);border-color:var(--accent);transform:scale(1.02)}
+  .src-row.focused .bar{height:34px;background:var(--accent)}
+  .src-row .info{flex:1;min-width:0;padding-left:12px;padding-right:10px}
+  .src-row .nm{font-size:14px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .src-row .nt{font-size:11px;color:var(--t3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip{font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap}
+  .chip.idle{color:var(--t3);background:rgba(108,120,133,.14)}
+  .chip.run{color:var(--amber);background:rgba(255,176,32,.14)}
+  .chip.ok{color:#3dd68c;background:rgba(61,214,140,.14)}
+  .chip.err{color:var(--accent);background:rgba(255,77,79,.14)}
+  .f-input{
+    height:46px;border:1px solid var(--line);border-radius:9px;background:var(--s1);
+    display:flex;align-items:center;padding:0 14px;color:var(--t1);font-size:13px;
+    outline:none;transition:all .15s;font-family:inherit;
+  }
+  .f-input::placeholder{color:var(--t3)}
+  .f-input:focus{border-color:var(--accent)}
+  .f-list{flex:1;overflow-y:auto;margin-top:14px;scrollbar-width:none}
+  .f-list::-webkit-scrollbar{display:none}
+  .f-ch{height:60px;border-radius:8px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;color:var(--t2);cursor:pointer;border:2px solid transparent;transition:all .15s}
+  .f-ch .dot{width:5px;height:5px;border-radius:50%;background:var(--line);flex:0 0 auto}
+  .f-ch .nm{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0;line-height:1.35}
+  .f-ch .nm b{font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .f-ch .nm i{font-style:normal;font-size:10px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .f-ch .g{margin-left:auto;font-size:11px;color:var(--t3)}
+  .f-ch.focused{background:var(--s2);color:var(--t1);border-color:var(--accent);font-weight:600}
+  .f-ch.focused .nm b{font-weight:600;color:var(--t1)}
+  .f-ch.focused .nm i{color:var(--t2)}
+  .f-ch.focused .dot{background:var(--accent)}
+  .f-empty{display:grid;place-items:center;height:200px;color:var(--t3);font-size:14px}
+
+  /* 播放器 */
+  .player{position:absolute;inset:0;background:#000;display:none;z-index:20}
+  .player.active{display:block}
+  .player .vid{position:absolute;inset:0;background:radial-gradient(90% 80% at 50% 45%,#101820,#000 75%)}
+  .player .vid:after{
+    content:"画面占位 · 示例流"; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    color:rgba(243,246,250,.07); font-size:26px; letter-spacing:6px; font-weight:700;
+  }
+  .player .top{position:absolute;top:0;left:0;right:0;padding:30px 48px 46px;background:linear-gradient(#000c,transparent)}
+  .player .top .ttl{font-size:20px;font-weight:600;display:flex;align-items:center;gap:12px}
+  .player .top .sub{color:var(--t2);font-size:13px;margin-top:6px}
+  .player .tag{background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px}
+  .player .bottom{position:absolute;bottom:0;left:0;right:0;padding:52px 48px 30px;background:linear-gradient(transparent,#000d)}
+  .pbar{height:5px;border-radius:3px;background:rgba(255,255,255,.22);position:relative;overflow:hidden}
+  .pbar i{position:absolute;left:0;top:0;bottom:0;width:34%;background:var(--accent)}
+  .ptime{display:flex;justify-content:space-between;color:var(--t2);font-size:12px;margin-top:10px}
+  .ptime .r{color:var(--t3)}
+
+  .tip{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);color:#5b6672;font-size:12px;letter-spacing:.3px}
+  .tip b{color:#9aa6b2}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside class="rail">
+    <div class="logo"></div>
+    <div class="rail-item f on" data-tab="live"><span class="bar"></span>直播</div>
+    <div class="rail-item f" data-tab="vod"><span class="bar"></span>影视</div>
+    <div class="rail-item f" data-tab="finder"><span class="bar"></span>找源</div>
+    <div class="rail-item f" data-tab="settings"><span class="bar"></span>设置</div>
+    <div class="rail-ver">v1.0.1</div>
+  </aside>
+
+  <main id="stage">
+    <!-- 直播 -->
+    <section class="screen active" data-screen="live">
+      <div class="live-wrap">
+        <div class="ch-list">
+          <div class="ch-head">
+            <h1>直播频道</h1>
+            <p>6 个频道 · 2 个分组</p>
+          </div>
+          <div class="ch-scroll" id="chscroll"></div>
+        </div>
+        <div class="preview">
+          <div class="pv">
+            <div class="pv-badge"></div>
+            <h2 id="pv-name">Mux 多码率测试台</h2>
+            <div class="pv-en" id="pv-en">Mux Multi-Bitrate Test</div>
+            <div class="meta"><span class="live-tag">LIVE</span><span id="pv-group">演示频道</span></div>
+            <div class="url" id="pv-url">https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8</div>
+            <div class="keys"><span>按</span><span class="kbd">OK</span><span>播放 · 上下切换频道</span></div>
+            <div class="btn f" id="live-play">开始播放</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 影视 -->
+    <section class="screen" data-screen="vod">
+      <div class="vod">
+        <h1>影视</h1>
+        <div class="sub">3 个分类 · 9 部作品 · 数据来自 JSON 片源</div>
+        <div id="cats"></div>
+      </div>
+    </section>
+
+    <!-- 找源 -->
+    <section class="screen" data-screen="finder">
+      <div class="finder">
+        <div class="left">
+          <div class="f-head">
+            <div style="flex:1;min-width:0">
+              <h1 style="font-size:40px;font-weight:700">找源</h1>
+              <div style="color:var(--t3);font-size:12px;margin-top:4px" id="src-count">6 个公开源 · 自动联网检索</div>
+            </div>
+            <div class="btn f" id="btn-search" style="margin-top:0;padding:11px 20px;font-size:14px">重新检索</div>
+          </div>
+          <div class="src-list" id="src-list"></div>
+        </div>
+        <div class="right">
+          <div class="f-head">
+            <div style="flex:1;min-width:0">
+              <div id="f-title" style="font-size:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">中文频道 · 公开列表</div>
+              <div id="f-sub" style="font-size:12px;color:var(--t3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">正在联网检索…</div>
+            </div>
+            <div class="btn f" id="btn-import" style="margin-top:0;padding:11px 20px;font-size:14px">设为直播源</div>
+          </div>
+          <input class="f-input" id="f-filter" style="margin-top:14px;width:62%" placeholder="按频道名过滤，例如 CCTV、体育" />
+          <div class="f-list" id="f-channels"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 详情 -->
+    <section class="screen" data-screen="detail">
+      <div class="detail">
+        <div class="bgimg" id="d-bg"></div>
+        <div class="dposter" id="d-poster">B</div>
+        <div class="body">
+          <div class="cat" id="d-cat">电影</div>
+          <h1 id="d-title">Big Buck Bunny</h1>
+          <div class="meta">
+            <span class="r" id="d-rate">8.1</span>
+            <span id="d-year">2008</span>
+            <span id="d-eps">单片</span>
+          </div>
+          <div class="desc" id="d-desc"></div>
+          <div class="actions">
+            <div class="btn f" id="d-play">播放</div>
+            <div class="btn ghost f" id="d-back">返回</div>
+          </div>
+          <div class="eps" id="d-epbox">
+            <h3>选集</h3>
+            <div class="ep-row" id="d-eprow"></div>
+          </div>
+          <div class="src" id="d-src"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 设置 -->
+    <section class="screen" data-screen="settings">
+      <div class="settings">
+        <div class="col-l">
+          <h1>设置</h1>
+          <div class="sub">配置自己的片源。留空则使用内置演示数据，改完记得保存。</div>
+
+          <div class="field-lab"><span class="bar"></span>直播源（M3U / M3U8）</div>
+          <div class="field f ph">https://example.com/live.m3u</div>
+          <div class="hint">支持 http(s) 链接、file:// 或绝对路径；支持 #EXTINF 的 group-title / tvg-logo。</div>
+
+          <div class="field-lab"><span class="bar"></span>影视目录（JSON）</div>
+          <div class="field f ph">https://example.com/catalog.json</div>
+          <div class="hint">结构：{"categories":[{"name":"电影","items":[{"title":"…","episodes":[{"name":"正片","url":"…"}]}]}]}</div>
+
+          <div class="field-lab"><span class="bar"></span>自定义源池（找源页用）</div>
+          <div class="field f ph" style="height:84px;align-items:flex-start;padding-top:14px;line-height:22px">每行一个：名称|地址</div>
+          <div class="hint">这些地址会出现在「找源」页，和内置公开源一起参与一键检索。</div>
+
+          <div class="actions" style="margin-top:24px">
+            <div class="btn f" id="s-save">保存并刷新</div>
+            <div class="btn ghost f">恢复内置演示</div>
+          </div>
+        </div>
+
+        <div class="col-r">
+          <div class="field-lab" style="margin-top:0"><span class="bar"></span>遥控器操作</div>
+          <div class="keys-table">
+            <div class="r"><span class="k">方向键</span><span class="d">移动焦点</span></div>
+            <div class="r"><span class="k">OK</span><span class="d">确认 / 播放 / 暂停</span></div>
+            <div class="r"><span class="k">左 / 右（播放中）</span><span class="d">快退 / 快进 10 秒</span></div>
+            <div class="r"><span class="k">返回</span><span class="d">退出或返回上一级</span></div>
+          </div>
+          <div class="hint" style="margin-top:16px;line-height:18px">
+            部分盒子对 HLS 支持较弱，直播卡顿可在片源侧换低码率线路；播放器已开启硬解与网络缓存。
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 播放器 -->
+  <div class="player" id="player">
+    <div class="vid"></div>
+    <div class="top">
+      <div class="ttl"><span class="tag" id="p-tag">直播</span><span id="p-title">Mux 多码率测试台</span></div>
+      <div class="sub" id="p-sub">演示频道</div>
+    </div>
+    <div class="bottom">
+      <div class="pbar"><i id="p-fill"></i></div>
+      <div class="ptime"><span id="p-time">12:04 / 35:20</span><span class="r">OK 暂停 · 左右快进快退 · 返回退出</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="tip"><b>Persephone TV</b> · 用 <b>方向键</b> 移动焦点，<b>回车</b> 确认，<b>Esc</b> 返回 —— 和电视遥控器一致</div>
+
+<script>
+const channels = [
+  {g:'演示频道', n:'Mux 多码率测试台', en:'Mux Multi-Bitrate Test', u:'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'},
+  {g:'演示频道', n:'苹果 BipBop 示例流', en:'Apple BipBop', u:'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8'},
+  {g:'演示频道', n:'辛特尔 预告片', en:'Sintel Trailer', u:'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8'},
+  {g:'演示频道', n:'钢之泪 预告', en:'Tears of Steel', u:'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8'},
+  {g:'本地/局域网', n:'本机示例（HLS）', en:'Local HLS Sample', u:'https://test-streams.mux.dev/pts_shift/master.m3u8'},
+  {g:'本地/局域网', n:'局域网示例占位', en:'LAN Placeholder', u:'http://192.168.1.10:8080/live/stream.m3u8'}
+];
+
+// 和 App 里一致：字母/数字开头的排在汉字前面，中文按拼音、数字按数值
+function nameRank(s){
+  const c = s.charAt(0);
+  if (/[0-9A-Za-z]/.test(c)) return 0;
+  if (/[\u4e00-\u9fff]/.test(c)) return 1;
+  return 2;
+}
+function cmpName(a, b){
+  const ra = nameRank(a), rb = nameRank(b);
+  if (ra !== rb) return ra - rb;
+  return a.localeCompare(b, 'zh-Hans-CN', { numeric: true });
+}
+
+// 和 App 里一致：英文名已被中文名包含时不重复显示（CCTV-1 综合 下面不再写 CCTV-1）
+function subOf(c){
+  if (!c.en) return '';
+  if (c.en.toLowerCase() === c.n.toLowerCase()) return '';
+  if (c.n.toLowerCase().includes(c.en.toLowerCase())) return '';
+  return c.en;
+}
+
+channels.sort((a, b) => cmpName(a.g, b.g) || cmpName(a.n, b.n));
+
+const catalog = [
+  {cat:'电影', items:[
+    {t:'Big Buck Bunny', y:'2008', r:'8.1', d:'一只大块头兔子被三只啮齿动物欺负后决定反击。Blender 基金会出品的开源动画短片，常被用作视频编解码测试片。', c1:'#243447', c2:'#13202c', eps:['正片']},
+    {t:'Elephants Dream', y:'2006', r:'7.6', d:'世界上第一部完全用开源软件制作的动画电影，讲述两个角色在一台奇异机器中的旅程。', c1:'#2b2438', c2:'#171326', eps:['正片']},
+    {t:'Sintel', y:'2010', r:'7.7', d:'少女 Sintel 穿越荒原寻找她的小龙伙伴，一部由 Blender 基金会制作的奇幻短片。', c1:'#33262a', c2:'#1d1418', eps:['正片']},
+    {t:'Tears of Steel', y:'2012', r:'6.9', d:'未来阿姆斯特丹，一群人试图阻止机器人毁灭世界。真人拍摄与 CG 结合的技术演示片。', c1:'#1f2f35', c2:'#101d22', eps:['正片']}
+  ]},
+  {cat:'短片', items:[
+    {t:'For Bigger Blazes', y:'2013', r:'6.2', d:'Chromecast 宣传短片之一，适合用来测试播放器起播速度与短内容跳转。', c1:'#2f2a22', c2:'#1b1712', eps:['短片']},
+    {t:'For Bigger Escapes', y:'2013', r:'6.0', d:'另一支 Chromecast 宣传短片，画面节奏快，便于观察解码与画面同步表现。', c1:'#22302a', c2:'#131d18', eps:['短片']},
+    {t:'For Bigger Fun', y:'2013', r:'6.1', d:'短时长示例视频，用于验证连播与播放完成后的行为。', c1:'#2a2433', c2:'#171320', eps:['短片']}
+  ]},
+  {cat:'剧集（多集示例）', items:[
+    {t:'公路之旅', y:'2014', r:'7.2', d:'多集结构示例：详情页会出现剧集列表，可按集切换播放。数据完全来自本地 JSON，可替换为你自己的片源。', c1:'#33302a', c2:'#1e1c17', eps:['第 1 集','第 2 集','第 3 集']},
+    {t:'车评现场', y:'2015', r:'6.8', d:'多集示例之二，用于验证剧集网格的焦点移动与记忆播放。', c1:'#262b36', c2:'#141821', eps:['第 1 集','第 2 集']}
+  ]}
+];
+
+/* ---------- 渲染频道列表 ---------- */
+const chscroll = document.getElementById('chscroll');
+let n = 0, curGroup = '';
+channels.forEach((c, i) => {
+  if (c.g !== curGroup) {
+    curGroup = c.g;
+    const h = document.createElement('div');
+    h.className = 'ch-group'; h.textContent = c.g;
+    chscroll.appendChild(h);
+  }
+  n++;
+  const el = document.createElement('div');
+  el.className = 'ch f' + (i === 0 ? ' sel' : '');
+  el.dataset.i = i;
+  el.innerHTML = `<span class="num">${String(n).padStart(2,'0')}</span>`
+    + `<span class="nm"><b>${c.n}</b>${subOf(c) ? `<i>${subOf(c)}</i>` : ''}</span>`
+    + `<span class="dot"></span>`;
+  el.addEventListener('click', () => selectChannel(i));
+  el.addEventListener('mouseenter', () => selectChannel(i));
+  chscroll.appendChild(el);
+});
+
+function selectChannel(i){
+  document.querySelectorAll('.ch').forEach(e => e.classList.toggle('sel', +e.dataset.i === i));
+  const c = channels[i];
+  document.getElementById('pv-name').textContent = c.n;
+  const en = document.getElementById('pv-en');
+  en.textContent = subOf(c);
+  document.getElementById('pv-group').textContent = c.g;
+  document.getElementById('pv-url').textContent = c.u;
+}
+
+// 排序后第一条不一定是原来写死在 HTML 里的那条，同步一下预览面板
+if (channels.length) selectChannel(0);
+
+/* ---------- 渲染影视 ---------- */
+const cats = document.getElementById('cats');
+catalog.forEach(cat => {
+  const box = document.createElement('div');
+  box.className = 'cat';
+  box.innerHTML = `<div class="cat-t"><span class="bar"></span>${cat.cat}<span class="n">${cat.items.length} 部</span></div>`;
+  const row = document.createElement('div');
+  row.className = 'row';
+  cat.items.forEach(it => {
+    const card = document.createElement('div');
+    card.className = 'card f';
+    card.innerHTML = `
+      <div class="poster" style="background:linear-gradient(150deg,${it.c1},${it.c2})">
+        <div class="ph">${it.t.slice(0,1)}</div>
+        <div class="rate">${it.r}</div>
+      </div>
+      <div class="t">${it.t}</div>
+      <div class="m">${it.y} · ${it.eps.length > 1 ? it.eps.length + ' 集' : '单片'}</div>`;
+    card.addEventListener('click', () => openDetail(it));
+    row.appendChild(card);
+  });
+  box.appendChild(row);
+  cats.appendChild(box);
+});
+
+/* ---------- 详情 ---------- */
+let currentItem = null;
+function openDetail(it){
+  currentItem = it;
+  document.getElementById('d-cat').textContent = '影片';
+  document.getElementById('d-title').textContent = it.t;
+  document.getElementById('d-rate').textContent = it.r;
+  document.getElementById('d-year').textContent = it.y;
+  document.getElementById('d-eps').textContent = it.eps.length > 1 ? '共 ' + it.eps.length + ' 集' : '单片';
+  document.getElementById('d-desc').textContent = it.d;
+  document.getElementById('d-bg').style.background = `linear-gradient(135deg,${it.c1},${it.c2} 60%,#201419)`;
+  const dp = document.getElementById('d-poster');
+  dp.textContent = it.t.slice(0,1);
+  dp.style.background = `linear-gradient(160deg,${it.c1},${it.c2})`;
+  const box = document.getElementById('d-epbox');
+  const row = document.getElementById('d-eprow');
+  row.innerHTML = '';
+  if (it.eps.length > 1){
+    box.style.display = 'block';
+    it.eps.forEach(e => {
+      const el = document.createElement('div');
+      el.className = 'ep f'; el.textContent = e;
+      el.addEventListener('click', () => play(it.t, e, false));
+      row.appendChild(el);
+    });
+  } else box.style.display = 'none';
+  document.getElementById('d-src').innerHTML =
+    `<span class="tag2">片源</span><span>JSON 目录 · 直连 MP4</span><span>·</span><span>${it.eps.length} 个播放地址</span>`;
+  show('detail');
+}
+
+/* ---------- 播放器 ---------- */
+function play(title, sub, isLive){
+  document.getElementById('p-title').textContent = title;
+  document.getElementById('p-sub').textContent = sub || '';
+  const tag = document.getElementById('p-tag');
+  tag.style.display = isLive ? 'inline-block' : 'none';
+  document.querySelector('.pbar').style.display = isLive ? 'none' : 'block';
+  document.getElementById('p-time').textContent = isLive ? '直播中' : '12:04 / 35:20';
+  document.getElementById('player').classList.add('active');
+  focusFirst(document.getElementById('player'));
+}
+
+/* ---------- 找源 ---------- */
+const sources = [
+  {id:'cn', n:'中文频道 · 公开列表', note:'iptv-org 收录的公开华语频道，体积小、起播快', count:186, ms:820},
+  {id:'news', n:'新闻频道 · 公开列表', note:'全球公开新闻频道', count:142, ms:960},
+  {id:'sports', n:'体育频道 · 公开列表', note:'全球公开体育频道', count:98, ms:1120},
+  {id:'documentary', n:'纪录片 · 公开列表', note:'纪录片类公开频道', count:41, ms:1240},
+  {id:'music', n:'音乐频道 · 公开列表', note:'音乐类公开频道', count:76, ms:1380},
+  {id:'index', n:'全量索引 · 公开列表', note:'上万个频道，拉取较慢，建议配合关键词过滤', count:0, ms:0, fail:'连接超时'}
+];
+const seeds = {
+  cn:[
+    {zh:'CCTV-1 综合', en:'CCTV-1', g:'央视'},
+    {zh:'CCTV-5 体育', en:'CCTV-5', g:'央视'},
+    {zh:'CCTV-13 新闻', en:'CCTV-13', g:'央视'},
+    {zh:'安徽卫视', en:'Anhui Satellite TV', g:'卫视'},
+    {zh:'东方卫视', en:'Dragon TV', g:'卫视'},
+    {zh:'湖南卫视', en:'Hunan Satellite TV', g:'卫视'},
+    {zh:'浙江卫视', en:'Zhejiang Satellite TV', g:'卫视'},
+    {zh:'翡翠台', en:'TVB Jade', g:'港台'},
+    {zh:'凤凰卫视资讯台', en:'Phoenix InfoNews Channel', g:'港台'},
+    {zh:'少儿动画', en:'Kids Animation', g:'少儿'}
+  ],
+  news:[
+    {zh:'国际新闻', en:'World News', g:'新闻'},
+    {zh:'财经新闻', en:'Business News', g:'新闻'},
+    {zh:'深度报道', en:'In Depth', g:'新闻'},
+    {zh:'早间新闻', en:'Morning News', g:'新闻'},
+    {zh:'夜间新闻', en:'Night News', g:'新闻'},
+    {zh:'时政观察', en:'Politics Watch', g:'新闻'}
+  ],
+  sports:[
+    {zh:'体育综合', en:'Sports General', g:'体育'},
+    {zh:'足球频道', en:'Football', g:'体育'},
+    {zh:'篮球频道', en:'Basketball', g:'体育'},
+    {zh:'极限运动', en:'Extreme Sports', g:'体育'},
+    {zh:'赛车频道', en:'Motorsport', g:'体育'},
+    {zh:'高尔夫', en:'Golf', g:'体育'}
+  ],
+  documentary:[
+    {zh:'自然纪录', en:'Nature', g:'纪录'},
+    {zh:'历史档案', en:'History', g:'纪录'},
+    {zh:'科学探索', en:'Science', g:'纪录'},
+    {zh:'人文地理', en:'Culture & Geography', g:'纪录'},
+    {zh:'军事观察', en:'Military', g:'纪录'}
+  ],
+  music:[
+    {zh:'流行音乐', en:'Pop Music', g:'音乐'},
+    {zh:'古典音乐', en:'Classical', g:'音乐'},
+    {zh:'现场演出', en:'Live Concert', g:'音乐'},
+    {zh:'MV 频道', en:'Music Videos', g:'音乐'},
+    {zh:'民谣电台', en:'Folk Radio', g:'音乐'}
+  ],
+  index:[
+    {zh:'综合', en:'General', g:'综合'},
+    {zh:'新闻', en:'News', g:'综合'},
+    {zh:'体育', en:'Sports', g:'综合'},
+    {zh:'影视', en:'Movies', g:'综合'},
+    {zh:'纪录', en:'Documentary', g:'综合'},
+    {zh:'音乐', en:'Music', g:'综合'}
+  ]
+};
+const fState = {};
+let fSelected = 'cn';
+let fChannels = {};
+let fFilter = '';
+
+function makeChannels(seed, n){
+  const out = [];
+  for (let i = 0; i < n; i++){
+    const b = seed[i % seed.length];
+    const round = Math.floor(i / seed.length);
+    out.push({ n: round === 0 ? b.zh : `${b.zh} ${round + 1}`, en: b.en, g: b.g });
+  }
+  // 和 App 里一致：按音序排，数字按数值（CCTV-2 在 CCTV-13 前面）
+  out.sort((a, b) => cmpName(a.n, b.n));
+  return out;
+}
+
+function buildSources(){
+  const box = document.getElementById('src-list');
+  box.innerHTML = '';
+  sources.forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'src-row f';
+    el.dataset.id = s.id;
+    el.innerHTML = `<span class="bar"></span>
+      <div class="info"><div class="nm">${s.n}</div><div class="nt">${s.note}</div></div>
+      <span class="chip idle">未检索</span>`;
+    el.addEventListener('click', () => onSourceClick(s.id));
+    el.addEventListener('mouseenter', () => selectSource(s.id));
+    box.appendChild(el);
+  });
+}
+
+function updateChips(){
+  sources.forEach(s => {
+    const el = document.querySelector(`.src-row[data-id="${s.id}"]`);
+    if (!el) return;
+    const st = fState[s.id] || { status:'idle' };
+    const chip = el.querySelector('.chip');
+    const note = el.querySelector('.nt');
+    if (st.status === 'run'){ chip.className = 'chip run'; chip.textContent = '检索中'; }
+    else if (st.status === 'ok'){ chip.className = 'chip ok'; chip.textContent = st.count + ' 频道'; }
+    else if (st.status === 'err'){
+      chip.className = 'chip err'; chip.textContent = '失败';
+      note.textContent = st.err; note.style.color = 'var(--accent)';
+    }
+    else { chip.className = 'chip idle'; chip.textContent = '未检索'; }
+  });
+}
+
+function selectSource(id){
+  fSelected = id;
+  document.querySelectorAll('.src-row').forEach(el => el.classList.toggle('sel', el.dataset.id === id));
+  const s = sources.find(x => x.id === id);
+  const st = fState[id] || { status:'idle' };
+  document.getElementById('f-title').textContent = s.n;
+  document.getElementById('f-sub').textContent =
+    st.status === 'ok'   ? `${st.count} 个频道 · 拉取耗时 ${st.ms} ms` :
+    st.status === 'run'  ? '正在联网检索…' :
+    st.status === 'err'  ? st.err : s.note;
+  renderChannels();
+}
+
+function renderChannels(){
+  const box = document.getElementById('f-channels');
+  const st = fState[fSelected] || { status:'idle' };
+  box.innerHTML = '';
+  if (st.status === 'run'){
+    box.innerHTML = '<div class="f-empty">正在下载并解析播放列表…</div>'; return;
+  }
+  if (st.status === 'err'){
+    box.innerHTML = `<div class="f-empty">这个源没拉到：${st.err}</div>`; return;
+  }
+  if (st.status !== 'ok'){
+    box.innerHTML = '<div class="f-empty">左侧选中一个源，按 OK 联网检索</div>'; return;
+  }
+  const list = (fChannels[fSelected] || []).filter(c => {
+    if (!fFilter) return true;
+    const k = fFilter.toLowerCase();
+    return c.n.toLowerCase().includes(k)
+      || (c.en || '').toLowerCase().includes(k)
+      || c.g.toLowerCase().includes(k);
+  });
+  if (!list.length){ box.innerHTML = `<div class="f-empty">没有匹配「${fFilter}」的频道</div>`; return; }
+  list.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'f-ch f';
+    el.innerHTML = `<span class="dot"></span>`
+      + `<span class="nm"><b>${c.n}</b>${subOf(c) ? `<i>${subOf(c)}</i>` : ''}</span>`
+      + `<span class="g">${c.g}</span>`;
+    el.addEventListener('click', () => play(c.n, c.g, true));
+    box.appendChild(el);
+  });
+}
+
+function probeAll(){
+  const btn = document.getElementById('btn-search');
+  btn.textContent = '检索中…';
+  sources.forEach(s => fState[s.id] = { status:'run' });
+  updateChips();
+  renderChannels();
+  sources.forEach((s, i) => {
+    setTimeout(() => {
+      if (s.fail){
+        fState[s.id] = { status:'err', err:s.fail };
+      } else {
+        fState[s.id] = { status:'ok', count:s.count, ms:s.ms };
+        fChannels[s.id] = makeChannels(seeds[s.id], Math.min(s.count, 24));
+      }
+      updateChips();
+      if (s.id === fSelected) selectSource(fSelected);
+    }, 420 + i * 300);
+  });
+  setTimeout(() => {
+    btn.textContent = '重新检索';
+    document.getElementById('src-count').textContent =
+      sources.length + ' 个公开源 · 已检索完成';
+  }, 420 + sources.length * 300);
+}
+
+function onSourceClick(id){
+  const st = fState[id];
+  if (st && st.status === 'ok'){ importSource(); return; }
+  selectSource(id);
+  fState[id] = { status:'run' };
+  updateChips();
+  renderChannels();
+  const s = sources.find(x => x.id === id);
+  setTimeout(() => {
+    if (s.fail) fState[id] = { status:'err', err:s.fail };
+    else {
+      fState[id] = { status:'ok', count:s.count, ms:s.ms };
+      fChannels[id] = makeChannels(seeds[id], Math.min(s.count, 24));
+    }
+    updateChips();
+    if (fSelected === id) selectSource(id);
+  }, 900);
+}
+
+function importSource(){
+  const btn = document.getElementById('btn-import');
+  btn.textContent = '已导入 ✓';
+  document.getElementById('f-sub').textContent = '已设为当前直播源，正在返回直播页…';
+  setTimeout(() => {
+    btn.textContent = '设为直播源';
+    show('live');
+  }, 700);
+}
+
+document.getElementById('btn-search').addEventListener('click', probeAll);
+document.getElementById('btn-import').addEventListener('click', importSource);
+document.getElementById('f-filter').addEventListener('input', e => {
+  fFilter = e.target.value;
+  renderChannels();
+});
+
+/* ---------- 屏幕切换 ---------- */
+const screens = ['live','vod','finder','detail','settings'];
+let stack = ['live'];
+let finderInited = false;
+
+function show(name){
+  if (name === 'live' || name === 'vod' || name === 'settings' || name === 'finder') { stack = [name]; }
+  else { stack.push(name); }
+  screens.forEach(s => {
+    document.querySelector(`[data-screen="${s}"]`).classList.toggle('active', s === name);
+  });
+  document.querySelectorAll('.rail-item').forEach(r => {
+    r.classList.toggle('on', r.dataset.tab === (name === 'detail' ? 'vod' : name));
+  });
+  // 首次进入找源页：构建源列表并自动联网检索
+  if (name === 'finder' && !finderInited) {
+    finderInited = true;
+    buildSources();
+    probeAll();
+    selectSource('cn');
+  }
+  const stage = document.querySelector(`[data-screen="${name}"]`);
+  focusFirst(stage);
+}
+
+function back(){
+  const player = document.getElementById('player');
+  if (player.classList.contains('active')) {
+    player.classList.remove('active');
+    focusFirst(document.querySelector('.screen.active'));
+    return;
+  }
+  if (document.querySelector('[data-screen="detail"]').classList.contains('active')) {
+    show('vod'); return;
+  }
+}
+
+document.querySelectorAll('.rail-item').forEach(r => {
+  r.addEventListener('click', () => show(r.dataset.tab));
+});
+document.getElementById('live-play').addEventListener('click', () => {
+  const sel = document.querySelector('.ch.sel');
+  const c = channels[+sel.dataset.i];
+  play(c.n, c.g, true);
+});
+document.getElementById('d-play').addEventListener('click', () => {
+  if (currentItem) play(currentItem.t, currentItem.eps[0], false);
+});
+document.getElementById('d-back').addEventListener('click', () => show('vod'));
+
+/* ---------- 焦点系统（空间导航） ---------- */
+let focusedEl = null;
+
+function focusables(){
+  const player = document.getElementById('player');
+  if (player.classList.contains('active')) return [...player.querySelectorAll('.f')].filter(visible);
+  const list = [...document.querySelectorAll('.rail-item.f, .screen.active .f')];
+  return list.filter(visible);
+}
+function visible(el){ return el.offsetParent !== null; }
+
+function focusFirst(scope){
+  const list = focusables();
+  const target = list.find(e => scope.contains(e)) || list[0];
+  if (target) setFocus(target);
+}
+function setFocus(el){
+  if (!el) return;
+  if (focusedEl) focusedEl.classList.remove('focused');
+  focusedEl = el;
+  el.classList.add('focused');
+  if (el.classList.contains('ch')) selectChannel(+el.dataset.i);
+  el.scrollIntoView({block:'nearest'});
+}
+
+function move(dir){
+  const list = focusables();
+  if (!focusedEl || !list.includes(focusedEl)) { setFocus(list[0]); return; }
+  const a = focusedEl.getBoundingClientRect();
+  const ax = a.left + a.width/2, ay = a.top + a.height/2;
+  let best = null, bestScore = Infinity;
+  list.forEach(el => {
+    if (el === focusedEl) return;
+    const b = el.getBoundingClientRect();
+    const bx = b.left + b.width/2, by = b.top + b.height/2;
+    const dx = bx - ax, dy = by - ay;
+    let primary, secondary;
+    if (dir === 'left')  { if (dx > -4) return; primary = -dx; secondary = Math.abs(dy); }
+    if (dir === 'right') { if (dx <  4) return; primary =  dx; secondary = Math.abs(dy); }
+    if (dir === 'up')    { if (dy > -4) return; primary = -dy; secondary = Math.abs(dx); }
+    if (dir === 'down')  { if (dy <  4) return; primary =  dy; secondary = Math.abs(dx); }
+    const score = primary + secondary * 2.2;
+    if (score < bestScore) { bestScore = score; best = el; }
+  });
+  if (best) setFocus(best);
+}
+
+document.addEventListener('keydown', e => {
+  const k = e.key;
+  const typing = document.activeElement && document.activeElement.tagName === 'INPUT';
+  if (typing) {
+    if (k === 'Escape') { document.activeElement.blur(); e.preventDefault(); }
+    return; // 输入框内交给浏览器原生处理
+  }
+  if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter',' ','Escape','Backspace'].includes(k)) e.preventDefault();
+  if (k === 'ArrowLeft') move('left');
+  else if (k === 'ArrowRight') move('right');
+  else if (k === 'ArrowUp') move('up');
+  else if (k === 'ArrowDown') move('down');
+  else if (k === 'Enter' || k === ' ') focusedEl && focusedEl.click();
+  else if (k === 'Escape' || k === 'Backspace') back();
+});
+
+/* 自适应缩放 */
+function fit(){
+  const s = Math.min(window.innerWidth / 1300, window.innerHeight / 760);
+  document.getElementById('app').style.transform = `scale(${s})`;
+}
+window.addEventListener('resize', fit); fit();
+
+setFocus(document.querySelector('.rail-item.on'));
+
+/* 支持用 #vod / #detail / #settings / #player 直接打开某个界面（便于截图与分享） */
+(function(){
+  const h = (location.hash || '').replace('#','');
+  if (h === 'vod' || h === 'settings' || h === 'finder') show(h);
+  else if (h === 'detail') openDetail(catalog[0].items[0]);
+  else if (h === 'player') play(channels[0].n, channels[0].g, true);
+})();
+</script>
+</body>
+</html>
